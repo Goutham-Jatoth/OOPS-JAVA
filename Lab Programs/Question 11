@@ -1,0 +1,78 @@
+class Drop {
+    private int item;
+    private boolean available = false;
+
+    // Producer puts an item in the drop
+    public synchronized void put(int item) throws InterruptedException {
+        while (available) {  // wait if item is already available
+            wait();
+        }
+        this.item = item;
+        available = true;
+        System.out.println("Produced: " + item);
+        notify();  // notify consumer
+    }
+
+    // Consumer takes an item from the drop
+    public synchronized int take() throws InterruptedException {
+        while (!available) {  // wait if no item available
+            wait();
+        }
+        available = false;
+        System.out.println("Consumed: " + item);
+        notify();  // notify producer
+        return item;
+    }
+}
+
+class Producer implements Runnable {
+    private Drop drop;
+
+    public Producer(Drop drop) {
+        this.drop = drop;
+    }
+
+    @Override
+    public void run() {
+        int i = 0;
+        try {
+            while (true) {
+                drop.put(i++);
+                Thread.sleep(500);  // simulate time to produce
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Producer interrupted");
+        }
+    }
+}
+
+class Consumer implements Runnable {
+    private Drop drop;
+
+    public Consumer(Drop drop) {
+        this.drop = drop;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                drop.take();
+                Thread.sleep(700);  // simulate time to consume
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Consumer interrupted");
+        }
+    }
+}
+
+public class ProducerConsumerDemo {
+    public static void main(String[] args) {
+        Drop drop = new Drop();
+        Thread producerThread = new Thread(new Producer(drop));
+        Thread consumerThread = new Thread(new Consumer(drop));
+
+        producerThread.start();
+        consumerThread.start();
+    }
+}
