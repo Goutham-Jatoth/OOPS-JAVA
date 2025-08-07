@@ -1,0 +1,55 @@
+abstract class Shape {
+    int a, b;  // dimensions
+
+    Shape(int a, int b) {
+        this.a = a;
+        this.b = b;
+    }
+
+    abstract void printArea();
+}
+
+class Rectangle extends Shape {
+    Rectangle(int a, int b) {
+        super(a, b);
+    }
+
+    @Override
+    void printArea() {
+        System.out.println("Rectangle area: " + (a * b));
+    }
+}
+
+class Triangle extends Shape {
+    Triangle(int a, int b) {
+        super(a, b);
+    }
+
+    @Override
+    void printArea() {
+        System.out.println("Triangle area: " + (0.5 * a * b));
+    }
+}
+
+class Circle extends Shape {
+    Circle(int radius) {
+        super(radius, 0);  // second parameter not needed
+    }
+
+    @Override
+    void printArea() {
+        System.out.println("Circle area: " + (Math.PI * a * a));
+    }
+}
+
+public class ShapeDemo {
+    public static void main(String[] args) {
+        Shape rect = new Rectangle(10, 5);
+        Shape tri = new Triangle(10, 5);
+        Shape cir = new Circle(7);
+
+        rect.printArea();
+        tri.printArea();
+        cir.printArea();
+    }
+}
