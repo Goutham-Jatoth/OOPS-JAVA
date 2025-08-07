@@ -1,0 +1,57 @@
+A) Simple Java Applet to Display a Message
+
+import java.applet.Applet;
+import java.awt.Graphics;
+
+public class MessageApplet extends Applet {
+    public void paint(Graphics g) {
+        g.drawString("Hello, this is a simple message!", 50, 50);
+    }
+}
+
+
+B) Java Applet to Compute Factorial of an Integer
+
+import java.applet.Applet;
+import java.awt.*;
+import java.awt.event.*;
+
+public class FactorialApplet extends Applet implements ActionListener {
+    TextField input, output;
+    Button compute;
+
+    public void init() {
+        Label label1 = new Label("Enter number:");
+        Label label2 = new Label("Factorial:");
+
+        input = new TextField(10);
+        output = new TextField(20);
+        output.setEditable(false);
+
+        compute = new Button("Compute");
+        compute.addActionListener(this);
+
+        add(label1);
+        add(input);
+        add(compute);
+        add(label2);
+        add(output);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        try {
+            int n = Integer.parseInt(input.getText());
+            if (n < 0) {
+                output.setText("Invalid input");
+                return;
+            }
+            long fact = 1;
+            for (int i = 1; i <= n; i++) {
+                fact *= i;
+            }
+            output.setText(Long.toString(fact));
+        } catch (NumberFormatException ex) {
+            output.setText("Enter a valid integer");
+        }
+    }
+}
