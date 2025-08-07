@@ -1,0 +1,35 @@
+import java.io.File;
+
+public class ListFilesRecursive {
+
+    public static void listAllFiles(File dir) {
+        if (dir == null || !dir.exists()) {
+            System.out.println("Directory does not exist.");
+            return;
+        }
+        if (!dir.isDirectory()) {
+            System.out.println(dir.getAbsolutePath() + " is not a directory.");
+            return;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                // Recursively list files in subdirectory
+                listAllFiles(file);
+            } else {
+                System.out.println(file.getAbsolutePath());
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        // Change this to the directory you want to list
+        File directory = new File("C:\\Users\\Public\\Documents");
+
+        System.out.println("Listing all files under: " + directory.getAbsolutePath());
+        listAllFiles(directory);
+    }
+}
