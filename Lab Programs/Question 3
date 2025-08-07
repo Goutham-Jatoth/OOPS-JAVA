@@ -1,0 +1,63 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class IntegerDivision extends JFrame implements ActionListener {
+    private JTextField num1Field, num2Field, resultField;
+    private JButton divideButton;
+
+    public IntegerDivision() {
+        super("Integer Division");
+
+        // Create components
+        JLabel label1 = new JLabel("Num1:");
+        JLabel label2 = new JLabel("Num2:");
+        JLabel label3 = new JLabel("Result:");
+
+        num1Field = new JTextField(10);
+        num2Field = new JTextField(10);
+        resultField = new JTextField(15);
+        resultField.setEditable(false);
+
+        divideButton = new JButton("Divide");
+        divideButton.addActionListener(this);
+
+        // Layout setup
+        setLayout(new GridLayout(4, 2, 5, 5));
+        add(label1);
+        add(num1Field);
+        add(label2);
+        add(num2Field);
+        add(label3);
+        add(resultField);
+        add(new JLabel());  // empty label for spacing
+        add(divideButton);
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(300, 150);
+        setLocationRelativeTo(null);  // center on screen
+        setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        try {
+            int num1 = Integer.parseInt(num1Field.getText().trim());
+            int num2 = Integer.parseInt(num2Field.getText().trim());
+
+            if (num2 == 0) {
+                throw new ArithmeticException("Division by zero");
+            }
+
+            int result = num1 / num2;
+            resultField.setText(String.valueOf(result));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter valid integers for Num1 and Num2.", "Number Format Exception", JOptionPane.ERROR_MESSAGE);
+        } catch (ArithmeticException ex) {
+            JOptionPane.showMessageDialog(this, "Cannot divide by zero.", "Arithmetic Exception", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new IntegerDivision());
+    }
+}
