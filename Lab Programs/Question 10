@@ -1,0 +1,60 @@
+import java.io.*;
+import java.util.*;
+import javax.swing.*;
+
+public class PhoneDirectory {
+    // Maps for fast lookup
+    private HashMap<String, String> nameToPhone = new HashMap<>();
+    private HashMap<String, String> phoneToName = new HashMap<>();
+
+    public PhoneDirectory(String filename) {
+        loadFromFile(filename);
+    }
+
+    private void loadFromFile(String filename) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\\t");
+                if (parts.length == 2) {
+                    String name = parts[0].trim();
+                    String phone = parts[1].trim();
+                    nameToPhone.put(name, phone);
+                    phoneToName.put(phone, name);
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error reading file: " + e.getMessage());
+            System.exit(1);
+        }
+    }
+
+    public String search(String input) {
+        if (nameToPhone.containsKey(input)) {
+            return "Phone number of " + input + " is " + nameToPhone.get(input);
+        } else if (phoneToName.containsKey(input)) {
+            return "Name with phone number " + input + " is " + phoneToName.get(input);
+        } else {
+            return "No matching entry found for: " + input;
+        }
+    }
+
+    public static void main(String[] args) {
+        PhoneDirectory directory = new PhoneDirectory("data.txt");
+
+        while (true) {
+            String input = JOptionPane.showInputDialog(null, 
+                "Enter a Name or Phone Number (or Cancel to exit):", 
+                "Phone Directory Lookup", 
+                JOptionPane.QUESTION_MESSAGE);
+
+            if (input == null || input.trim().isEmpty()) {
+                break;  // Exit on cancel or empty input
+            }
+
+            String result = directory.search(input.trim());
+            JOptionPane.showMessageDialog(null, result);
+        }
+    }
+}
