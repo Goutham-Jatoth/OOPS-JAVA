@@ -1,0 +1,83 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class MouseEventDemo extends JFrame {
+    private String eventName = "";
+    
+    public MouseEventDemo() {
+        setTitle("Mouse Event Demo");
+        setSize(400, 300);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        // Create a JPanel to listen for mouse events
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // Draw event name centered
+                g.setFont(new Font("Arial", Font.BOLD, 20));
+                FontMetrics fm = g.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(eventName)) / 2;
+                int y = getHeight() / 2;
+                g.drawString(eventName, x, y);
+            }
+        };
+
+        // MouseAdapter for click, press, release, enter, exit
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                eventName = "Mouse Clicked";
+                panel.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                eventName = "Mouse Pressed";
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                eventName = "Mouse Released";
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                eventName = "Mouse Entered";
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                eventName = "Mouse Exited";
+                panel.repaint();
+            }
+        });
+
+        // MouseMotionAdapter for mouse dragged and moved
+        panel.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                eventName = "Mouse Dragged";
+                panel.repaint();
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                eventName = "Mouse Moved";
+                panel.repaint();
+            }
+        });
+
+        add(panel);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MouseEventDemo::new);
+    }
+}
