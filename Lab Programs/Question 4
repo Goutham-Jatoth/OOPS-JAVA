@@ -1,0 +1,74 @@
+import java.util.Random;
+
+public class MultiThreadApp {
+    private static Integer sharedNumber = null;
+
+    public static void main(String[] args) {
+        Object lock = new Object();
+
+        // Thread 1: Generates random number every 1 second
+        Thread generator = new Thread(() -> {
+            Random rand = new Random();
+            while (true) {
+                synchronized (lock) {
+                    sharedNumber = rand.nextInt(100);  // random number 0-99
+                    System.out.println("Generated number: " + sharedNumber);
+                    lock.notifyAll();  // notify waiting threads
+                    try {
+                        lock.wait();  // wait for worker thread to finish
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    Thread.sleep(1000);  // wait 1 second before next number
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        // Thread 2: Computes square if number is even
+        Thread squareThread = new Thread(() -> {
+            while (true) {
+                synchronized (lock) {
+                    try {
+                        while (sharedNumber == null || sharedNumber % 2 != 0) {
+                            lock.wait();
+                        }
+                        int val = sharedNumber;
+                        System.out.println("Square of " + val + " = " + (val * val));
+                        sharedNumber = null;
+                        lock.notifyAll();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        // Thread 3: Computes cube if number is odd
+        Thread cubeThread = new Thread(() -> {
+            while (true) {
+                synchronized (lock) {
+                    try {
+                        while (sharedNumber == null || sharedNumber % 2 == 0) {
+                            lock.wait();
+                        }
+                        int val = sharedNumber;
+                        System.out.println("Cube of " + val + " = " + (val * val * val));
+                        sharedNumber = null;
+                        lock.notifyAll();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        // Start all threads
+        generator.start();
+        squareThread.start();
+        cubeThread.start();
+    }
+}
