@@ -1,0 +1,82 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class SimpleCalculator extends JFrame implements ActionListener {
+    JTextField display;
+    String currentOp = "";
+    double firstNum = 0;
+    boolean startNewNumber = true;
+
+    public SimpleCalculator() {
+        setTitle("Simple Calculator");
+        setSize(300, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        display = new JTextField("0");
+        display.setEditable(false);
+        display.setHorizontalAlignment(JTextField.RIGHT);
+        add(display, BorderLayout.NORTH);
+
+        JPanel panel = new JPanel(new GridLayout(4, 4, 5, 5));
+
+        String buttons = "789/456*123-0.%+";
+        for (char c : buttons.toCharArray()) {
+            JButton btn = new JButton(String.valueOf(c));
+            btn.addActionListener(this);
+            panel.add(btn);
+        }
+
+        add(panel);
+
+        setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        String cmd = e.getActionCommand();
+
+        if ("0123456789.".contains(cmd)) {
+            if (startNewNumber) {
+                display.setText(cmd.equals(".") ? "0." : cmd);
+                startNewNumber = false;
+            } else {
+                if (cmd.equals(".") && display.getText().contains(".")) return; // avoid multiple dots
+                display.setText(display.getText() + cmd);
+            }
+        } else {
+            calculate(Double.parseDouble(display.getText()));
+            currentOp = cmd;
+            startNewNumber = true;
+        }
+    }
+
+    void calculate(double secondNum) {
+        try {
+            switch (currentOp) {
+                case "": firstNum = secondNum; break;
+                case "+": firstNum += secondNum; break;
+                case "-": firstNum -= secondNum; break;
+                case "*": firstNum *= secondNum; break;
+                case "/":
+                    if (secondNum == 0) {
+                        JOptionPane.showMessageDialog(this, "Error: Divide by zero");
+                        firstNum = 0;
+                    } else firstNum /= secondNum;
+                    break;
+                case "%":
+                    if (secondNum == 0) {
+                        JOptionPane.showMessageDialog(this, "Error: Divide by zero");
+                        firstNum = 0;
+                    } else firstNum %= secondNum;
+                    break;
+            }
+            display.setText("" + firstNum);
+        } catch (Exception ex) {
+            display.setText("Error");
+        }
+    }
+
+    public static void main(String[] args) {
+        new SimpleCalculator();
+    }
+}
