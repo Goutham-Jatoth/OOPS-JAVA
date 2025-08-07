@@ -1,0 +1,54 @@
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
+import java.util.ArrayList;
+
+public class TableDisplay extends JFrame {
+    public TableDisplay() {
+        setTitle("Table Display");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        ArrayList<String[]> rows = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader("Table.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // Split by comma and trim spaces
+                String[] data = line.split("\\s*,\\s*");
+                rows.add(data);
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error reading file: " + e.getMessage());
+            System.exit(1);
+        }
+
+        if (rows.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "File is empty!");
+            System.exit(0);
+        }
+
+        // Determine columns count from header
+        int cols = rows.get(0).length;
+        int rowsCount = rows.size();
+
+        // Set GridLayout with rowsCount rows and cols columns
+        setLayout(new GridLayout(rowsCount, cols));
+
+        // Add JLabels for each element
+        for (String[] row : rows) {
+            for (String element : row) {
+                JLabel label = new JLabel(element, SwingConstants.CENTER);
+                label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                add(label);
+            }
+        }
+
+        pack();
+        setLocationRelativeTo(null);  // center the frame
+        setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(TableDisplay::new);
+    }
+}
