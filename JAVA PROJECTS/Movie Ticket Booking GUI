@@ -1,0 +1,131 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+class Movie {
+    String name;
+    int availableSeats;
+    double ticketPrice;
+
+    Movie(String name, int seats, double price) {
+        this.name = name;
+        this.availableSeats = seats;
+        this.ticketPrice = price;
+    }
+}
+
+public class MovieTicketBookingGUI extends JFrame implements ActionListener {
+    private Movie[] movies;
+    private JComboBox<String> movieList;
+    private JTextField ticketField;
+    private JTextArea receiptArea;
+    private JButton bookButton, clearButton;
+
+    public MovieTicketBookingGUI() {
+        // Movie data
+        movies = new Movie[]{
+                new Movie("Avengers: Endgame", 10, 250.0),
+                new Movie("KGF Chapter 2", 8, 200.0),
+                new Movie("RRR", 5, 180.0),
+                new Movie("Pushpa 2", 12, 220.0)
+        };
+
+        // Window setup
+        setTitle("🎬 Movie Ticket Booking System");
+        setSize(500, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+        // Title Label
+        JLabel titleLabel = new JLabel("🎟 Movie Ticket Booking", JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        add(titleLabel, BorderLayout.NORTH);
+
+        // Center panel for form
+        JPanel centerPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Movie dropdown
+        centerPanel.add(new JLabel("Select Movie:"));
+        String[] movieNames = new String[movies.length];
+        for (int i = 0; i < movies.length; i++) {
+            movieNames[i] = movies[i].name + " (₹" + movies[i].ticketPrice + ", Seats: " + movies[i].availableSeats + ")";
+        }
+        movieList = new JComboBox<>(movieNames);
+        centerPanel.add(movieList);
+
+        // Ticket input
+        centerPanel.add(new JLabel("Number of Tickets:"));
+        ticketField = new JTextField();
+        centerPanel.add(ticketField);
+
+        // Buttons
+        bookButton = new JButton("Book Ticket");
+        bookButton.addActionListener(this);
+        clearButton = new JButton("Clear");
+        clearButton.addActionListener(this);
+        centerPanel.add(bookButton);
+        centerPanel.add(clearButton);
+
+        add(centerPanel, BorderLayout.CENTER);
+
+        // Receipt area
+        receiptArea = new JTextArea();
+        receiptArea.setEditable(false);
+        receiptArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        add(new JScrollPane(receiptArea), BorderLayout.SOUTH);
+
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == bookButton) {
+            int selectedIndex = movieList.getSelectedIndex();
+            Movie selectedMovie = movies[selectedIndex];
+
+            try {
+                int tickets = Integer.parseInt(ticketField.getText());
+
+                if (tickets <= 0) {
+                    JOptionPane.showMessageDialog(this, "❌ Enter a valid ticket number!");
+                } else if (tickets > selectedMovie.availableSeats) {
+                    JOptionPane.showMessageDialog(this,
+                            "❌ Only " + selectedMovie.availableSeats + " seats are available!");
+                } else {
+                    selectedMovie.availableSeats -= tickets;
+                    double totalCost = tickets * selectedMovie.ticketPrice;
+
+                    receiptArea.setText(
+                            "============================\n" +
+                            "       🎟 MOVIE TICKET 🎟\n" +
+                            "============================\n" +
+                            "Movie: " + selectedMovie.name + "\n" +
+                            "Tickets: " + tickets + "\n" +
+                            "Price per Ticket: ₹" + selectedMovie.ticketPrice + "\n" +
+                            "Total Price: ₹" + totalCost + "\n" +
+                            "Remaining Seats: " + selectedMovie.availableSeats + "\n" +
+                            "============================\n" +
+                            "🍿 Enjoy your show! 🍿\n"
+                    );
+
+                    // Update dropdown with new seat availability
+                    movieList.removeItemAt(selectedIndex);
+                    movieList.insertItemAt(selectedMovie.name + " (₹" + selectedMovie.ticketPrice + ", Seats: " + selectedMovie.availableSeats + ")", selectedIndex);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "❌ Please enter a valid number!");
+            }
+
+        } else if (e.getSource() == clearButton) {
+            ticketField.setText("");
+            receiptArea.setText("");
+        }
+    }
+
+    public static void main(String[] args) {
+        new MovieTicketBookingGUI();
+    }
+}
