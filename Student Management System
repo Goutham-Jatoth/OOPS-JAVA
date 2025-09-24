@@ -1,0 +1,363 @@
+PROJECT STRUCTURE:-
+
+studentmgmt/
+    ├── mainapp/
+    │      └── StudentManagementApp.java
+    ├── models/
+    │      ├── Person.java
+    │      ├── Student.java
+    │      └── Teacher.java
+    ├── interfaces/
+    │      ├── Role.java
+    │      └── Storable.java
+    ├── services/
+    │      └── StudentService.java
+    └── io/
+           └── FileHandler.java
+----------------------------------------------------------------------------------
+
+BASE CLASS AND INHERITENCE:-
+
+
+
+package studentmgmt.models;
+
+// Base Class
+public abstract class Person {
+    protected String name;
+    protected int age;
+
+    // Constructor
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // Abstract method (must be implemented by subclasses)
+    public abstract void displayInfo();
+
+    // Using Object class method override
+    @Override
+    public String toString() {
+        return "Name: " + name + ", Age: " + age;
+    }
+}
+
+-----------------------------------------------------------------------------------
+
+
+SUB CLASS : STUDENT:-
+
+
+
+package studentmgmt.models;
+
+import studentmgmt.interfaces.Role;
+
+public class Student extends Person implements Role {
+    private String studentId;
+    private String course;
+
+    public Student(String name, int age, String studentId, String course) {
+        super(name, age);
+        this.studentId = studentId;
+        this.course = course;
+    }
+
+    // Overriding abstract method
+    @Override
+    public void displayInfo() {
+        System.out.println("Student -> " + this);
+    }
+
+    // Implementing interface method
+    @Override
+    public void showRole() {
+        System.out.println(name + " is a Student enrolled in " + course);
+    }
+
+    // Final method cannot be overridden
+    public final void study() {
+        System.out.println(name + " is studying " + course);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + ", StudentID: " + studentId + ", Course: " + course;
+    }
+}
+
+
+-------------------------------------------------------------------------------------------
+
+
+SUB CLASS : TEACHER:-
+
+package studentmgmt.models;
+
+import studentmgmt.interfaces.Role;
+
+public class Teacher extends Person implements Role {
+    private String subject;
+
+    public Teacher(String name, int age, String subject) {
+        super(name, age);
+        this.subject = subject;
+    }
+
+    @Override
+    public void displayInfo() {
+        System.out.println("Teacher -> " + this);
+    }
+
+    @Override
+    public void showRole() {
+        System.out.println(name + " teaches " + subject);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + ", Subject: " + subject;
+    }
+}
+
+
+-----------------------------------------------------------------------------
+
+
+INFERENCES:-
+
+
+package studentmgmt.interfaces;
+
+// Interface with variables (implicitly public, static, final)
+public interface Role {
+    int DEFAULT_ROLE_LEVEL = 1; // Constant
+
+    void showRole(); // Abstract method
+}
+
+
+----------------------------------------------------------------------------
+
+
+package studentmgmt.interfaces;
+
+// Demonstrating multiple inheritance through interfaces
+public interface Storable {
+    void saveToFile(String filename);
+}
+
+---------------------------------------------------------------------------
+
+SERVICE CLASS:-
+
+
+
+package studentmgmt.services;
+
+import studentmgmt.models.Person;
+
+public class StudentService {
+    // Substitutability: Base class reference can hold subclass object
+    public void printDetails(Person p) {
+        p.displayInfo(); // Polymorphism: Actual method depends on object type
+    }
+}
+
+
+-----------------------------------------------------------------------------------
+
+
+FILE HANDLING:-
+
+package studentmgmt.io;
+
+import java.io.*;
+
+public class FileHandler {
+    public static void writeData(String filename, String data) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename, true))) {
+            bw.write(data);
+            bw.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void readData(String filename) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            System.out.println("\n--- File Contents ---");
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+-------------------------------------------------------------------------------------------
+
+MAIN APPLICATION:-
+
+
+
+package studentmgmt.mainapp;
+
+import studentmgmt.models.*;
+import studentmgmt.services.StudentService;
+import studentmgmt.io.FileHandler;
+
+public class StudentManagementApp {
+    public static void main(String[] args) {
+        // Create objects
+        Student s1 = new Student("Alice", 20, "S101", "Computer Science");
+        Teacher t1 = new Teacher("Dr. Bob", 45, "Mathematics");
+
+        // Service usage
+        StudentService service = new StudentService();
+        service.printDetails(s1);
+        service.printDetails(t1);
+
+        // Interface role usage
+        s1.showRole();
+        t1.showRole();
+
+        // Final method usage
+        s1.study();
+
+        // File handling
+        FileHandler.writeData("students.txt", s1.toString());
+        FileHandler.writeData("students.txt", t1.toString());
+        FileHandler.readData("students.txt");
+    }
+}
+
+--------------------------------------------------------------------------------------
+
+
+DEMONSTRATION:-
+
+
+Inheritance → Person → Student, Teacher
+
+Abstract class → Person
+
+Polymorphism → printDetails(Person p)
+
+Interfaces → Role, Storable
+
+final keyword → study() method
+
+super → used in constructors & toString()
+
+Packages & CLASSPATH → Organized structure
+
+Java I/O → FileHandler
+
+
+---------------------------------------------------------------------------
+
+UML DIAGRAM:-
+
+
+                   <<abstract>>
++----------------+
+|    Person      |
++----------------+
+| - name: String |
+| - age: int     |
++----------------+
+| + Person(...)  |
+| + displayInfo(): void (abstract) |
+| + toString(): String |
++----------------+
+          ^
+          |
+   -----------------
+   |               |
++---------+   +-----------+
+| Student |   |  Teacher  |
++---------+   +-----------+
+| - studentId: String     |
+| - course: String        |
+| + study(): final void   |
+| + displayInfo(): void   |
+| + showRole(): void      |
+| + toString(): String    |
++---------+               |
+| implements Role         | - subject: String
++-------------------------+ + displayInfo(): void
+                           | + showRole(): void
+                           | + toString(): String
+                           +-------------------+
+                                     |
+                                     |
+                       +--------------------------+
+                       |        Role (interface)  |
+                       +--------------------------+
+                       | + showRole(): void       |
+                       | + DEFAULT_ROLE_LEVEL:int |
+                       +--------------------------+
+
++------------------+
+| StudentService   |
++------------------+
+| + printDetails(p:Person): void |
++------------------+
+
++------------------+
+|   FileHandler    |
++------------------+
+| + writeData(filename:String, data:String): void |
+| + readData(filename:String): void               |
++------------------+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Person
+
+Abstract base class (shown with italics / <<abstract>>)
+
+Has common attributes (name, age)
+
+Defines abstract method displayInfo()
+
+Student & Teacher
+
+Inherit from Person (generalization arrow ↑)
+
+Override displayInfo() and implement Role interface
+
+Student has a final method study()
+
+Role (Interface)
+
+Declares showRole()
+
+Has constant variable DEFAULT_ROLE_LEVEL
+
+StudentService
+
+Demonstrates polymorphism → printDetails(Person p)
+
+Uses substitutability (base class reference can point to subclass objects)
+
+FileHandler
+
+Utility class for Java I/O
+
+Reads & writes student/teacher info to file
