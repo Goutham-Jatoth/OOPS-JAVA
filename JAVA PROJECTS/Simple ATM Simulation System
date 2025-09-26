@@ -1,0 +1,207 @@
+// ATMSystem.java
+import java.util.Scanner;
+
+public class ATMSystem {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Create an account (Encapsulation in action)
+        AxisBankAccount account = new AxisBankAccount("AXIS12345", "Goutham", 1234, 10000);
+
+        System.out.print("Enter PIN: ");
+        int enteredPin = sc.nextInt();
+
+        if (account.validatePin(enteredPin)) {
+            System.out.println("Welcome to Axis Bank ATM, " + account.getAccountHolderName());
+
+            while (true) {
+                System.out.println("\n===== ATM Menu =====");
+                System.out.println("1. Check Balance");
+                System.out.println("2. Deposit Money");
+                System.out.println("3. Withdraw Money");
+                System.out.println("4. Exit");
+                System.out.print("Choose an option: ");
+                int choice = sc.nextInt();
+
+                switch (choice) {
+                    case 1:
+                        System.out.println("Your Balance: ₹" + account.getBalance());
+                        break;
+                    case 2:
+                        System.out.print("Enter deposit amount: ");
+                        double depositAmount = sc.nextDouble();
+                        account.deposit(depositAmount);
+                        break;
+                    case 3:
+                        System.out.print("Enter withdrawal amount: ");
+                        double withdrawAmount = sc.nextDouble();
+                        account.withdraw(withdrawAmount);
+                        break;
+                    case 4:
+                        System.out.println("Thank you for using Axis Bank ATM!");
+                        sc.close();
+                        return;
+                    default:
+                        System.out.println("Invalid Option. Try again.");
+                }
+            }
+        } else {
+            System.out.println("Incorrect PIN. Access Denied!");
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ATMSystem.java
+import java.util.*;
+
+public class ATMSystem {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Multiple accounts stored in HashMap
+        Map<String, AxisBankAccount> accounts = new HashMap<>();
+
+        // Adding some sample accounts
+        accounts.put("AXIS123", new AxisBankAccount("AXIS123", "Goutham", 1234, 10000));
+        accounts.put("AXIS456", new AxisBankAccount("AXIS456", "Rahul", 4567, 15000));
+        accounts.put("AXIS789", new AxisBankAccount("AXIS789", "Priya", 7890, 20000));
+
+        System.out.print("Enter Account Number: ");
+        String accNo = sc.next();
+
+        // Check if account exists
+        if (accounts.containsKey(accNo)) {
+            AxisBankAccount account = accounts.get(accNo);
+
+            System.out.print("Enter PIN: ");
+            int enteredPin = sc.nextInt();
+
+            if (account.validatePin(enteredPin)) {
+                System.out.println("Welcome to Axis Bank ATM, " + account.getAccountHolderName());
+
+                while (true) {
+                    System.out.println("\n===== ATM Menu =====");
+                    System.out.println("1. Check Balance");
+                    System.out.println("2. Deposit Money");
+                    System.out.println("3. Withdraw Money");
+                    System.out.println("4. Mini Statement");
+                    System.out.println("5. Exit");
+                    System.out.print("Choose an option: ");
+                    int choice = sc.nextInt();
+
+                    switch (choice) {
+                        case 1:
+                            System.out.println("Your Balance: ₹" + account.getBalance());
+                            break;
+                        case 2:
+                            System.out.print("Enter deposit amount: ");
+                            double depositAmount = sc.nextDouble();
+                            account.deposit(depositAmount);
+                            break;
+                        case 3:
+                            System.out.print("Enter withdrawal amount: ");
+                            double withdrawAmount = sc.nextDouble();
+                            account.withdraw(withdrawAmount);
+                            break;
+                        case 4:
+                            account.printMiniStatement();
+                            break;
+                        case 5:
+                            System.out.println("Thank you for using Axis Bank ATM!");
+                            sc.close();
+                            return;
+                        default:
+                            System.out.println("Invalid Option. Try again.");
+                    }
+                }
+            } else {
+                System.out.println("Incorrect PIN. Access Denied!");
+            }
+        } else {
+            System.out.println("Account not found!");
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ATMSystem.java
+public class ATMSystem {
+    public static void main(String[] args) {
+        // Creating multiple BankAccount objects (Different Axis Bank account holders)
+        BankAccount acc1 = new BankAccount("Goutham", 1234567890L, 10000, 1234);
+        BankAccount acc2 = new BankAccount("Rahul", 9876543210L, 2000, 5678);
+        BankAccount acc3 = new BankAccount("Priya", 1111222233L, 600, 9999);
+
+        System.out.println("=== Axis Bank ATM System ===\n");
+
+        // Successful deposit
+        acc1.deposit(1234, 5000);
+
+        // Wrong PIN deposit
+        acc1.deposit(1111, 1000);
+
+        // Successful withdrawal
+        acc2.withdraw(5678, 1000);
+
+        // Withdrawal below minimum balance
+        acc2.withdraw(5678, 1200);
+
+        // Wrong PIN withdrawal
+        acc2.withdraw(1234, 500);
+
+        // Check balance with correct PIN
+        acc3.printBalance(9999);
+
+        // Check balance with wrong PIN
+        acc3.printBalance(1111);
+    }
+}
