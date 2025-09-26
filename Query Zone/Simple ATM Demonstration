@@ -1,3 +1,75 @@
+// BankAccount.java
+public class BankAccount {
+    // Private Data Members (Encapsulation)
+    private String name;
+    private long accountNumber;
+    private double balance;
+    private int pin;
+
+    // Constructor (user-defined)
+    public BankAccount(String name, long accountNumber, double balance, int pin) {
+        this.name = name;
+        this.accountNumber = accountNumber;
+        this.balance = balance;
+        this.pin = pin;
+    }
+
+    // Deposit Method
+    public void deposit(int enteredPin, double amount) {
+        if (validatePin(enteredPin)) {
+            if (amount > 0) {
+                balance += amount;
+                System.out.println("Deposit of ₹" + amount + " successful. Current Balance: ₹" + balance);
+            } else {
+                System.out.println("Invalid deposit amount.");
+            }
+        } else {
+            System.out.println("Invalid PIN. Transaction denied.");
+        }
+    }
+
+    // Withdraw Method (maintain min balance ₹500)
+    public void withdraw(int enteredPin, double amount) {
+        if (validatePin(enteredPin)) {
+            if (amount > 0 && balance - amount >= 500) {
+                balance -= amount;
+                System.out.println("Withdrawal of ₹" + amount + " successful. Current Balance: ₹" + balance);
+            } else {
+                System.out.println("Insufficient balance or invalid amount (Minimum balance ₹500 must be maintained).");
+            }
+        } else {
+            System.out.println("Invalid PIN. Transaction denied.");
+        }
+    }
+
+    // Print Balance Method
+    public void printBalance(int enteredPin) {
+        if (validatePin(enteredPin)) {
+            System.out.println("Account Holder: " + name + " | Account Number: " + accountNumber);
+            System.out.println("Current Balance: ₹" + balance);
+        } else {
+            System.out.println("Invalid PIN. Access denied.");
+        }
+    }
+
+    // Private helper method for PIN validation
+    private boolean validatePin(int enteredPin) {
+        return this.pin == enteredPin;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ATMSystem.java
 public class ATMSystem {
     public static void main(String[] args) {
