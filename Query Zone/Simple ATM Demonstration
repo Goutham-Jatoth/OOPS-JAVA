@@ -1,0 +1,32 @@
+// ATMSystem.java
+public class ATMSystem {
+    public static void main(String[] args) {
+        // Creating multiple BankAccount objects (Different Axis Bank account holders)
+        BankAccount acc1 = new BankAccount("Goutham", 1234567890L, 10000, 1234);
+        BankAccount acc2 = new BankAccount("Rahul", 9876543210L, 2000, 5678);
+        BankAccount acc3 = new BankAccount("Priya", 1111222233L, 600, 9999);
+
+        System.out.println("=== Axis Bank ATM System ===\n");
+
+        // Successful deposit
+        acc1.deposit(1234, 5000);
+
+        // Wrong PIN deposit
+        acc1.deposit(1111, 1000);
+
+        // Successful withdrawal
+        acc2.withdraw(5678, 1000);
+
+        // Withdrawal below minimum balance
+        acc2.withdraw(5678, 1200);
+
+        // Wrong PIN withdrawal
+        acc2.withdraw(1234, 500);
+
+        // Check balance with correct PIN
+        acc3.printBalance(9999);
+
+        // Check balance with wrong PIN
+        acc3.printBalance(1111);
+    }
+}
