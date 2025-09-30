@@ -1,0 +1,435 @@
+src/
+ └── com/
+      └── axisbank/
+           ├── account/
+           │    └── BankAccount.java
+           └── app/
+                └── ATMSystem.java
+
+
+
+
+
+
+
+
+package com.axisbank.account;
+
+public class BankAccount {
+    // Private data members (Encapsulation)
+    private String name;
+    private long accountNumber;
+    private double balance;
+    private int pin;
+
+    // Constructor
+    public BankAccount(String name, long accountNumber, double balance, int pin) {
+        this.name = name;
+        this.accountNumber = accountNumber;
+        this.balance = balance;
+        this.pin = pin;
+    }
+
+    // Deposit method
+    public void deposit(int enteredPin, double amount) {
+        if (validatePin(enteredPin)) {
+            if (amount > 0) {
+                balance += amount;
+                System.out.println("₹" + amount + " deposited successfully into " + name + "'s account.");
+            } else {
+                System.out.println("Invalid deposit amount!");
+            }
+        } else {
+            System.out.println("❌ Incorrect PIN. Transaction failed.");
+        }
+    }
+
+    // Withdraw method (min balance ₹500 must be maintained)
+    public void withdraw(int enteredPin, double amount) {
+        if (validatePin(enteredPin)) {
+            if (amount > 0 && balance - amount >= 500) {
+                balance -= amount;
+                System.out.println("₹" + amount + " withdrawn successfully from " + name + "'s account.");
+            } else {
+                System.out.println("❌ Insufficient balance. Minimum ₹500 must be maintained.");
+            }
+        } else {
+            System.out.println("❌ Incorrect PIN. Transaction failed.");
+        }
+    }
+
+    // Print balance securely
+    public void printBalance(int enteredPin) {
+        if (validatePin(enteredPin)) {
+            System.out.println("Account Holder: " + name);
+            System.out.println("Account Number: " + accountNumber);
+            System.out.println("Current Balance: ₹" + balance);
+        } else {
+            System.out.println("❌ Incorrect PIN. Access denied.");
+        }
+    }
+
+    // Private method for PIN validation (Security)
+    private boolean validatePin(int enteredPin) {
+        return this.pin == enteredPin;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package com.axisbank.app;
+
+import com.axisbank.account.BankAccount;
+
+public class ATMSystem {
+    public static void main(String[] args) {
+        // Creating multiple accounts (Multiple Objects)
+        BankAccount acc1 = new BankAccount("Ravi Kumar", 1234567890L, 5000, 1234);
+        BankAccount acc2 = new BankAccount("Sneha Sharma", 9876543210L, 10000, 5678);
+
+        System.out.println("\n--- Axis Bank ATM System ---");
+
+        // Successful deposit
+        acc1.deposit(1234, 2000);
+
+        // Wrong PIN deposit
+        acc1.deposit(1111, 1000);
+
+        // Successful withdrawal
+        acc1.withdraw(1234, 3000);
+
+        // Withdrawal below min balance
+        acc1.withdraw(1234, 7000);
+
+        // Successful balance check
+        acc1.printBalance(1234);
+
+        // Wrong PIN balance check
+        acc2.printBalance(9999);
+
+        // Another customer transaction
+        acc2.withdraw(5678, 2000);
+        acc2.printBalance(5678);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+💡 Features Demonstrated
+
+Encapsulation: pin and balance are private, accessible only via methods.
+
+Security: Every method checks the PIN.
+
+Multiple Objects: Multiple customers (acc1, acc2).
+
+Packages: Code is modular with account and app packages.
+
+ATM Operations: Deposit, withdraw (with ₹500 min balance rule), balance check.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+🖥️ Step 1: Create Project Folders
+
+Open terminal/command prompt and create the following structure:
+
+mkdir -p src/com/axisbank/account
+mkdir -p src/com/axisbank/app
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+🖥️ Step 2: Save the Java Files
+
+Save BankAccount.java inside:
+src/com/axisbank/account/BankAccount.java
+
+Save ATMSystem.java inside:
+src/com/axisbank/app/ATMSystem.java
+
+
+
+
+
+
+
+
+
+
+
+
+
+🖥️ Step 3: Compile the Code
+
+Move into the src folder:
+
+cd src
+
+
+Now compile both classes while preserving package structure:
+
+javac com/axisbank/account/BankAccount.java com/axisbank/app/ATMSystem.java
+
+
+👉 This creates .class files inside the same package folders.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.
+
+🖥️ Step 4: Run the Program
+
+Run the main class (ATMSystem) with its fully qualified package name:
+
+java com.axisbank.app.ATMSystem
+
+
+
+
+
+
+
+
+
+
+
+
+
+🖥️ Step 5: Expected Output
+
+You’ll see something like this:
+
+--- Axis Bank ATM System ---
+₹2000.0 deposited successfully into Ravi Kumar's account.
+❌ Incorrect PIN. Transaction failed.
+₹3000.0 withdrawn successfully from Ravi Kumar's account.
+❌ Insufficient balance. Minimum ₹500 must be maintained.
+Account Holder: Ravi Kumar
+Account Number: 1234567890
+Current Balance: ₹4000.0
+❌ Incorrect PIN. Access denied.
+₹2000.0 withdrawn successfully from Sneha Sharma's account.
+Account Holder: Sneha Sharma
+Account Number: 9876543210
+Current Balance: ₹8000.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Title
+
+Simple Java Project on Packages and Access Modifiers – Axis Bank ATM System
+
+Objective
+
+To design a Java application that demonstrates the concepts of packages, access modifiers, encapsulation, and security by simulating basic ATM operations of Axis Bank.
+
+Theory
+
+Packages:
+
+Packages in Java are used to group related classes together for modular and industry-standard program design.
+
+Example: com.axisbank.account and com.axisbank.app.
+
+Access Modifiers:
+
+Private: restricts access within the class. Here, pin and balance are private to ensure data security.
+
+Public: allows controlled access via methods.
+
+Encapsulation:
+
+Wrapping data (fields) and code (methods) together inside a class.
+
+Sensitive data like PIN and Balance are hidden and accessed only through methods.
+
+ATM Operations:
+
+Deposit
+
+Withdraw (with minimum ₹500 balance rule)
+
+Balance Check (secured with PIN validation)
+
+Multiple Objects:
+
+Demonstrates different customers operating their accounts independently.
+
+Program Code
+📂 com/axisbank/account/BankAccount.java
+package com.axisbank.account;
+
+public class BankAccount {
+    private String name;
+    private long accountNumber;
+    private double balance;
+    private int pin;
+
+    public BankAccount(String name, long accountNumber, double balance, int pin) {
+        this.name = name;
+        this.accountNumber = accountNumber;
+        this.balance = balance;
+        this.pin = pin;
+    }
+
+    public void deposit(int enteredPin, double amount) {
+        if (validatePin(enteredPin)) {
+            if (amount > 0) {
+                balance += amount;
+                System.out.println("₹" + amount + " deposited successfully into " + name + "'s account.");
+            } else {
+                System.out.println("Invalid deposit amount!");
+            }
+        } else {
+            System.out.println("❌ Incorrect PIN. Transaction failed.");
+        }
+    }
+
+    public void withdraw(int enteredPin, double amount) {
+        if (validatePin(enteredPin)) {
+            if (amount > 0 && balance - amount >= 500) {
+                balance -= amount;
+                System.out.println("₹" + amount + " withdrawn successfully from " + name + "'s account.");
+            } else {
+                System.out.println("❌ Insufficient balance. Minimum ₹500 must be maintained.");
+            }
+        } else {
+            System.out.println("❌ Incorrect PIN. Transaction failed.");
+        }
+    }
+
+    public void printBalance(int enteredPin) {
+        if (validatePin(enteredPin)) {
+            System.out.println("Account Holder: " + name);
+            System.out.println("Account Number: " + accountNumber);
+            System.out.println("Current Balance: ₹" + balance);
+        } else {
+            System.out.println("❌ Incorrect PIN. Access denied.");
+        }
+    }
+
+    private boolean validatePin(int enteredPin) {
+        return this.pin == enteredPin;
+    }
+}
+
+📂 com/axisbank/app/ATMSystem.java
+package com.axisbank.app;
+
+import com.axisbank.account.BankAccount;
+
+public class ATMSystem {
+    public static void main(String[] args) {
+        BankAccount acc1 = new BankAccount("Ravi Kumar", 1234567890L, 5000, 1234);
+        BankAccount acc2 = new BankAccount("Sneha Sharma", 9876543210L, 10000, 5678);
+
+        System.out.println("\n--- Axis Bank ATM System ---");
+
+        acc1.deposit(1234, 2000);    // Successful
+        acc1.deposit(1111, 1000);    // Wrong PIN
+        acc1.withdraw(1234, 3000);   // Successful
+        acc1.withdraw(1234, 7000);   // Insufficient balance
+        acc1.printBalance(1234);     // Balance shown
+        acc2.printBalance(9999);     // Wrong PIN
+        acc2.withdraw(5678, 2000);   // Successful
+        acc2.printBalance(5678);     // Balance shown
+    }
+}
+
+Sample Output
+--- Axis Bank ATM System ---
+₹2000.0 deposited successfully into Ravi Kumar's account.
+❌ Incorrect PIN. Transaction failed.
+₹3000.0 withdrawn successfully from Ravi Kumar's account.
+❌ Insufficient balance. Minimum ₹500 must be maintained.
+Account Holder: Ravi Kumar
+Account Number: 1234567890
+Current Balance: ₹4000.0
+❌ Incorrect PIN. Access denied.
+₹2000.0 withdrawn successfully from Sneha Sharma's account.
+Account Holder: Sneha Sharma
+Account Number: 9876543210
+Current Balance: ₹8000.0
+
+Result
+
+The project was successfully executed.
+It demonstrates the concepts of packages, access modifiers, encapsulation, security, and multiple objects through an Axis Bank ATM System simulation.
