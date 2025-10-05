@@ -1,0 +1,428 @@
+AxisBankProject/
+ └── src/
+     └── com/
+         └── axisbank/
+             ├── account/
+             │    └── BankAccount.java
+             ├── loan/
+             │    └── LoanSystem.java
+             └── app/
+                  ├── ATMSystem.java
+                  └── LoanDemo.java
+
+
+
+
+
+
+
+
+
+package com.axisbank.account;
+
+// Demonstrates Encapsulation
+public class BankAccount {
+    private String name;
+    private long accountNumber;
+    private double balance;
+    private int pin;
+
+    // Constructor
+    public BankAccount(String name, long accountNumber, double balance, int pin) {
+        this.name = name;
+        this.accountNumber = accountNumber;
+        this.balance = balance;
+        this.pin = pin;
+    }
+
+    // Deposit money (PIN protected)
+    public void deposit(int enteredPin, double amount) {
+        if (enteredPin == pin) {
+            if (amount > 0) {
+                balance += amount;
+                System.out.println("Deposit Successful: ₹" + amount);
+            } else {
+                System.out.println("Invalid amount.");
+            }
+        } else {
+            System.out.println("Incorrect PIN. Transaction failed.");
+        }
+    }
+
+    // Withdraw money (PIN protected, maintain ₹500 min balance)
+    public void withdraw(int enteredPin, double amount) {
+        if (enteredPin == pin) {
+            if (amount > 0 && (balance - amount) >= 500) {
+                balance -= amount;
+                System.out.println("Withdrawal Successful: ₹" + amount);
+            } else {
+                System.out.println("Insufficient balance! Maintain ₹500 minimum.");
+            }
+        } else {
+            System.out.println("Incorrect PIN. Transaction failed.");
+        }
+    }
+
+    // Print balance securely
+    public void printBalance(int enteredPin) {
+        if (enteredPin == pin) {
+            System.out.println("Current Balance: ₹" + balance);
+        } else {
+            System.out.println("Incorrect PIN. Cannot display balance.");
+        }
+    }
+
+    // Getter for name (optional controlled access)
+    public String getName() {
+        return name;
+    }
+}
+
+
+
+
+
+
+package com.axisbank.loan;
+
+// Demonstrates Method Overloading
+public class LoanSystem {
+
+    // Simple EMI calculation method
+    private double calculateEMI(double amount, double rate, int years) {
+        double total = amount + (amount * rate * years / 100);
+        return total / (years * 12);
+    }
+
+    // Overloaded method 1: Personal Loan (default interest rate = 10%)
+    public void applyLoan(double amount, int years) {
+        double rate = 10.0;
+        double emi = calculateEMI(amount, rate, years);
+        System.out.println("\nPersonal Loan Applied: ₹" + amount + " for " + years + " years @ " + rate + "%");
+        System.out.println("Estimated EMI: ₹" + String.format("%.2f", emi));
+    }
+
+    // Overloaded method 2: Custom Loan (custom interest rate)
+    public void applyLoan(double amount, int years, double interestRate) {
+        double emi = calculateEMI(amount, interestRate, years);
+        System.out.println("\nCustom Loan Applied: ₹" + amount + " for " + years + " years @ " + interestRate + "%");
+        System.out.println("Estimated EMI: ₹" + String.format("%.2f", emi));
+    }
+
+    // Overloaded method 3: Loan by Type (Home, Car, Education)
+    public void applyLoan(String type, double amount, int years) {
+        double rate;
+        switch (type.toLowerCase()) {
+            case "home": rate = 7.0; break;
+            case "car": rate = 8.0; break;
+            case "education": rate = 6.5; break;
+            default: rate = 10.0;
+        }
+        double emi = calculateEMI(amount, rate, years);
+        System.out.println("\n" + type + " Loan Applied: ₹" + amount + " for " + years + " years @ " + rate + "%");
+        System.out.println("Estimated EMI: ₹" + String.format("%.2f", emi));
+    }
+}
+
+
+
+
+
+package com.axisbank.app;
+
+import com.axisbank.account.BankAccount;
+
+// Testing ATM Operations
+public class ATMSystem {
+    public static void main(String[] args) {
+        BankAccount acc1 = new BankAccount("Goutham", 1234567890L, 10000.0, 1234);
+        BankAccount acc2 = new BankAccount("Rahul", 9876543210L, 20000.0, 4321);
+
+        System.out.println("=== Axis Bank ATM System ===");
+
+        // Transactions for Account 1
+        acc1.deposit(1234, 5000.0);
+        acc1.withdraw(1234, 2000.0);
+        acc1.printBalance(1234);
+
+        // Transactions for Account 2
+        acc2.deposit(4321, 10000.0);
+        acc2.withdraw(4321, 2500.0);
+        acc2.printBalance(4321);
+    }
+}
+
+
+
+
+
+
+
+package com.axisbank.app;
+
+import com.axisbank.loan.LoanSystem;
+
+// Testing Method Overloading for Loans
+public class LoanDemo {
+    public static void main(String[] args) {
+        LoanSystem loanSystem = new LoanSystem();
+
+        System.out.println("\n=== Axis Bank Loan System ===");
+
+        // Personal Loan (default rate)
+        loanSystem.applyLoan(500000, 5);
+
+        // Custom Loan
+        loanSystem.applyLoan(300000, 3, 8.5);
+
+        // Loan by Type
+        loanSystem.applyLoan("Home", 2500000, 15);
+    }
+}
+
+
+
+
+
+
+
+
+
+=== Axis Bank ATM System ===
+Deposit Successful: ₹5000.0
+Withdrawal Successful: ₹2000.0
+Current Balance: ₹13000.0
+Deposit Successful: ₹10000.0
+Withdrawal Successful: ₹2500.0
+Current Balance: ₹27500.0
+
+=== Axis Bank Loan System ===
+Personal Loan Applied: ₹500000.0 for 5 years @ 10.0%
+Estimated EMI: ₹10416.67
+
+Custom Loan Applied: ₹300000.0 for 3 years @ 8.5%
+Estimated EMI: ₹9458.33
+
+Home Loan Applied: ₹2500000.0 for 15 years @ 7.0%
+Estimated EMI: ₹24166.67
+
+
+
+
+
+
+
+
+🎯 Concepts Demonstrated
+Concept	Implementation
+Encapsulation	Private fields in BankAccount with PIN-protected access
+Packages	com.axisbank.account, com.axisbank.loan, com.axisbank.app
+Method Overloading	Multiple applyLoan() methods with different parameter lists
+Real-World Simulation	ATM + Loan operations as in a real bank system
+
+
+
+
+
+
+
+
+
+=========================================
+   SIMPLE JAVA PROJECT ON POLYMORPHISM
+     AXIS BANK ATM & LOAN SYSTEM
+=========================================
+
+📘 PROJECT TITLE:
+Simple Java Project on Polymorphism – Axis Bank ATM & Loan System
+
+🎯 OBJECTIVE:
+To design and implement an ATM + Loan System in Java that demonstrates:
+- Encapsulation (Account details hidden)
+- Packages (Organized project structure)
+- Method Overloading (Loan facility with different parameters)
+- Real-World Banking Simulation
+
+=========================================
+📂 PROJECT STRUCTURE
+=========================================
+
+AxisBankProject/
+ └── src/
+     └── com/
+         └── axisbank/
+             ├── account/
+             │    └── BankAccount.java
+             ├── loan/
+             │    └── LoanSystem.java
+             └── app/
+                  ├── ATMSystem.java
+                  └── LoanDemo.java
+
+=========================================
+🧱 CLASS DETAILS
+=========================================
+
+1️⃣ com.axisbank.account.BankAccount
+-------------------------------------
+- Demonstrates **Encapsulation**.
+- Private data members:
+    • String name
+    • long accountNumber
+    • double balance
+    • int pin
+- PIN-protected methods:
+    • deposit(int enteredPin, double amount)
+    • withdraw(int enteredPin, double amount)
+    • printBalance(int enteredPin)
+
+2️⃣ com.axisbank.loan.LoanSystem
+-------------------------------------
+- Demonstrates **Method Overloading**.
+- Overloaded methods:
+    • applyLoan(double amount, int years) — Personal Loan (default 10%)
+    • applyLoan(double amount, int years, double interestRate) — Custom Loan
+    • applyLoan(String type, double amount, int years) — Type-based Loan (Home, Car, Education)
+- EMI Formula:
+    EMI = (amount + (amount * rate * years / 100)) / (years * 12)
+
+3️⃣ com.axisbank.app.ATMSystem
+-------------------------------------
+- Main class to test **ATM operations**.
+- Demonstrates deposits, withdrawals, and balance checks.
+
+4️⃣ com.axisbank.app.LoanDemo
+-------------------------------------
+- Main class to test **Loan operations**.
+- Demonstrates all overloaded loan methods.
+
+=========================================
+⚙️ HOW TO COMPILE AND RUN
+=========================================
+
+1️⃣ Open Command Prompt or Terminal inside the `src` folder.
+
+2️⃣ Compile all files:
+    javac com/axisbank/account/BankAccount.java com/axisbank/loan/LoanSystem.java com/axisbank/app/ATMSystem.java com/axisbank/app/LoanDemo.java
+
+3️⃣ Run the ATM System:
+    java com.axisbank.app.ATMSystem
+
+4️⃣ Run the Loan Demo:
+    java com.axisbank.app.LoanDemo
+
+=========================================
+💻 SAMPLE OUTPUT
+=========================================
+
+=== Axis Bank ATM System ===
+Deposit Successful: ₹5000.0
+Withdrawal Successful: ₹2000.0
+Current Balance: ₹13000.0
+Deposit Successful: ₹10000.0
+Withdrawal Successful: ₹2500.0
+Current Balance: ₹27500.0
+
+=== Axis Bank Loan System ===
+Personal Loan Applied: ₹500000.0 for 5 years @ 10.0%
+Estimated EMI: ₹10416.67
+
+Custom Loan Applied: ₹300000.0 for 3 years @ 8.5%
+Estimated EMI: ₹9458.33
+
+Home Loan Applied: ₹2500000.0 for 15 years @ 7.0%
+Estimated EMI: ₹24166.67
+
+=========================================
+📘 CONCEPTS DEMONSTRATED
+=========================================
+
+✅ Encapsulation:
+   - Account details (name, balance, PIN) are private.
+   - Only authorized access through methods.
+
+✅ Packages:
+   - Organized into com.axisbank.account, loan, and app.
+
+✅ Method Overloading:
+   - applyLoan() implemented with different parameter lists.
+
+✅ Real-World Simulation:
+   - Simulates basic Axis Bank ATM and Loan functionalities.
+
+=========================================
+👨‍💻 PROJECT CREATED BY:
+[Your Name]
+B.Tech - [Your Department]
+[Your College Name]
+=========================================
+
+
+
+
+
+
+
+                +-----------------------------------+
+                |          BankAccount              |
+                |-----------------------------------|
+                | - name : String                   |
+                | - accountNumber : long            |
+                | - balance : double                |
+                | - pin : int                       |
+                |-----------------------------------|
+                | + BankAccount(name, accNo,        |
+                |     balance, pin)                 |
+                | + deposit(enteredPin:int,         |
+                |     amount:double) : void         |
+                | + withdraw(enteredPin:int,        |
+                |     amount:double) : void         |
+                | + printBalance(enteredPin:int)    |
+                |     : void                        |
+                | + getName() : String              |
+                +-----------------------------------+
+
+                             ▲
+                             │ uses
+                             │
+                             │
++-------------------------------------+          +------------------------------------+
+|             ATMSystem               |          |             LoanSystem             |
+|-------------------------------------|          |------------------------------------|
+| + main(args:String[]) : void        |          | - calculateEMI(amount,rate,years)  |
+|                                     |          |     : double                       |
+|-------------------------------------|          | + applyLoan(amount:double,         |
+| Uses → BankAccount objects          |          |     years:int) : void              |
+| Demonstrates Encapsulation          |          | + applyLoan(amount:double,         |
+|                                     |          |     years:int, rate:double) : void |
+|                                     |          | + applyLoan(type:String,           |
+|                                     |          |     amount:double, years:int):void |
++-------------------------------------+          +------------------------------------+
+                                                   ▲
+                                                   │ used by
+                                                   │
+                                                   │
+                                           +----------------------+
+                                           |      LoanDemo        |
+                                           |----------------------|
+                                           | + main(args:String[])|
+                                           | Demonstrates         |
+                                           | Method Overloading   |
+                                           +----------------------+
+
+
+
+
+🧠 UML Explanation
+Class	Description	Key Concept
+BankAccount	Represents a bank account with secure data (PIN-protected).	Encapsulation
+ATMSystem	Demonstrates deposit, withdraw, and balance check.	Application of Encapsulation
+LoanSystem	Handles multiple applyLoan() methods.	Method Overloading (Polymorphism)
+LoanDemo	Tests the overloaded methods of LoanSystem.	Demonstration of Polymorphism
+🧱 Relationships
+
+ATMSystem → BankAccount → uses (association)
+
+LoanDemo → LoanSystem → uses (association)
+
+LoanSystem → demonstrates overloading (compile-time polymorphism)
