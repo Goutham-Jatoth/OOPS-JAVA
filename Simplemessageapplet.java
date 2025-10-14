@@ -41,4 +41,37 @@ public class Simplemessageapplet {
         // Make the frame visible
         frame.setVisible(true);
     }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import javax.swing.*;
+import java.awt.*;
+
+public class MessageWindow {
+    public static void main(String[] args) {
+        // Create a new frame (window)
+        JFrame frame = new JFrame("Simple Message");
+        frame.setSize(300, 200);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Create and add a label with message
+        JLabel label = new JLabel("Welcome to Java GUI Programming!", SwingConstants.CENTER);
+        frame.add(label, BorderLayout.CENTER);
+
+        frame.setVisible(true);
+    }
 }
