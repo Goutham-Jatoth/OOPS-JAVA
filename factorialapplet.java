@@ -100,4 +100,63 @@ public class factorialapplet extends JFrame implements ActionListener {
     public static void main(String[] args) {
         new factorialapplet();
     }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class FactorialGUI extends JFrame implements ActionListener {
+    JTextField t1, t2;
+    JButton b;
+
+    public FactorialGUI() {
+        setTitle("Factorial Calculator");
+        setSize(350, 200);
+        setLayout(new FlowLayout());
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        add(new JLabel("Enter any integer value:"));
+        t1 = new JTextField(10);
+        add(t1);
+
+        b = new JButton("Calculate");
+        add(b);
+        b.addActionListener(this);
+
+        add(new JLabel("Factorial value is:"));
+        t2 = new JTextField(10);
+        t2.setEditable(false);
+        add(t2);
+
+        setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        int n = Integer.parseInt(t1.getText());
+        int fact = 1;
+        for (int i = 1; i <= n; i++)
+            fact *= i;
+        t2.setText(String.valueOf(fact));
+    }
+
+    public static void main(String[] args) {
+        new FactorialGUI();
+    }
 }
