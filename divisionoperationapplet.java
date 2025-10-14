@@ -154,4 +154,86 @@ public class divisionoperationapplet extends JFrame implements ActionListener {
     public static void main(String[] args) {
         new divisionoperationapplet();
     }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class DivisionGUI extends JFrame implements ActionListener {
+    JTextField num1Field, num2Field, resultField;
+    JButton divideButton, clearButton;
+
+    public DivisionGUI() {
+        setTitle("Integer Division Calculator");
+        setSize(400, 250);
+        setLayout(new GridLayout(5, 2, 10, 10));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Labels and Text Fields
+        add(new JLabel("Enter Num1:"));
+        num1Field = new JTextField();
+        add(num1Field);
+
+        add(new JLabel("Enter Num2:"));
+        num2Field = new JTextField();
+        add(num2Field);
+
+        add(new JLabel("Result:"));
+        resultField = new JTextField();
+        resultField.setEditable(false);
+        add(resultField);
+
+        // Buttons
+        divideButton = new JButton("Divide");
+        clearButton = new JButton("Clear");
+        add(divideButton);
+        add(clearButton);
+
+        // Add listeners
+        divideButton.addActionListener(this);
+        clearButton.addActionListener(this);
+
+        setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == divideButton) {
+            try {
+                int num1 = Integer.parseInt(num1Field.getText());
+                int num2 = Integer.parseInt(num2Field.getText());
+                int result = num1 / num2;
+
+                resultField.setText(String.valueOf(result));
+                JOptionPane.showMessageDialog(this, "Division Successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } 
+            catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter valid integers!", "Number Format Error", JOptionPane.ERROR_MESSAGE);
+            } 
+            catch (ArithmeticException ex) {
+                JOptionPane.showMessageDialog(this, "Cannot divide by zero!", "Arithmetic Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } 
+        else if (e.getSource() == clearButton) {
+            num1Field.setText("");
+            num2Field.setText("");
+            resultField.setText("");
+        }
+    }
+
+    public static void main(String[] args) {
+        new DivisionGUI();
+    }
 }
