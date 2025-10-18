@@ -1,0 +1,201 @@
+🧭 Project Overview
+Title:
+
+Simple Java Project on Inheritance and Method Overriding – Swiggy Food Delivery System
+
+Objective:
+
+To design and implement a Java program that demonstrates:
+
+Inheritance: Sharing and extending common behaviors from parent classes.
+
+Method Overriding: Customizing behavior in child classes.
+
+Packages: Organizing classes for clarity and professionalism.
+
+
+
+
+
+
+
+
+
+
+
+🗂️ Project Structure
+SwiggyProject/
+├── src/
+│   ├── com/swiggy/base/
+│   │   └── Restaurant.java
+│   ├── com/swiggy/orders/
+│   │   ├── Order.java
+│   │   ├── VegOrder.java
+│   │   └── NonVegOrder.java
+│   └── com/swiggy/main/
+│       └── SwiggyApp.java
+
+
+
+
+
+
+
+
+
+
+💡 Code Implementation
+1️⃣ Restaurant.java (Base Class)
+
+Path: com/swiggy/base/Restaurant.java
+
+package com.swiggy.base;
+
+public class Restaurant {
+    protected String name;
+    protected String location;
+
+    public Restaurant(String name, String location) {
+        this.name = name;
+        this.location = location;
+    }
+
+    public void displayDetails() {
+        System.out.println("Restaurant Name: " + name);
+        System.out.println("Location: " + location);
+    }
+
+    public void prepareFood() {
+        System.out.println("Restaurant is preparing food...");
+    }
+}
+
+2️⃣ Order.java (Parent Class for Orders)
+
+Path: com/swiggy/orders/Order.java
+
+package com.swiggy.orders;
+
+import com.swiggy.base.Restaurant;
+
+public class Order extends Restaurant {
+    protected String customerName;
+    protected double price;
+
+    public Order(String restaurantName, String location, String customerName, double price) {
+        super(restaurantName, location);
+        this.customerName = customerName;
+        this.price = price;
+    }
+
+    public void orderDetails() {
+        System.out.println("Customer: " + customerName);
+        System.out.println("Total Price: ₹" + price);
+    }
+
+    public void deliver() {
+        System.out.println("Delivering your order soon...");
+    }
+}
+
+3️⃣ VegOrder.java (Child Class)
+
+Path: com/swiggy/orders/VegOrder.java
+
+package com.swiggy.orders;
+
+public class VegOrder extends Order {
+
+    public VegOrder(String restaurantName, String location, String customerName, double price) {
+        super(restaurantName, location, customerName, price);
+    }
+
+    // Method Overriding
+    @Override
+    public void deliver() {
+        System.out.println("Delivering fresh and healthy Veg meal 🍱 to " + customerName);
+    }
+}
+
+4️⃣ NonVegOrder.java (Child Class)
+
+Path: com/swiggy/orders/NonVegOrder.java
+
+package com.swiggy.orders;
+
+public class NonVegOrder extends Order {
+
+    public NonVegOrder(String restaurantName, String location, String customerName, double price) {
+        super(restaurantName, location, customerName, price);
+    }
+
+    // Method Overriding
+    @Override
+    public void deliver() {
+        System.out.println("Delivering hot and spicy Non-Veg meal 🍗 to " + customerName);
+    }
+}
+
+5️⃣ SwiggyApp.java (Main Class)
+
+Path: com/swiggy/main/SwiggyApp.java
+
+package com.swiggy.main;
+
+import com.swiggy.orders.VegOrder;
+import com.swiggy.orders.NonVegOrder;
+
+public class SwiggyApp {
+    public static void main(String[] args) {
+
+        System.out.println("===== Welcome to Swiggy Food Delivery System 🍕 =====");
+
+        VegOrder veg = new VegOrder("GreenBite", "Hyderabad", "Ananya", 250.0);
+        NonVegOrder nonveg = new NonVegOrder("SpiceHub", "Bangalore", "Ravi", 400.0);
+
+        System.out.println("\n--- Veg Order Details ---");
+        veg.displayDetails();
+        veg.orderDetails();
+        veg.deliver(); // Overridden method
+
+        System.out.println("\n--- Non-Veg Order Details ---");
+        nonveg.displayDetails();
+        nonveg.orderDetails();
+        nonveg.deliver(); // Overridden method
+
+        System.out.println("\n===== Thank You for using Swiggy! ✨ =====");
+    }
+}
+
+🎯 Key Concepts Demonstrated
+Concept	Description	Example
+Inheritance	Order inherits from Restaurant, VegOrder and NonVegOrder inherit from Order	class VegOrder extends Order
+Method Overriding	Child classes redefine deliver() method	VegOrder.deliver() vs NonVegOrder.deliver()
+Packages	Classes are organized by functionality	com.swiggy.base, com.swiggy.orders, com.swiggy.main
+🖥️ Sample Output
+===== Welcome to Swiggy Food Delivery System 🍕 =====
+
+--- Veg Order Details ---
+Restaurant Name: GreenBite
+Location: Hyderabad
+Customer: Ananya
+Total Price: ₹250.0
+Delivering fresh and healthy Veg meal 🍱 to Ananya
+
+--- Non-Veg Order Details ---
+Restaurant Name: SpiceHub
+Location: Bangalore
+Customer: Ravi
+Total Price: ₹400.0
+Delivering hot and spicy Non-Veg meal 🍗 to Ravi
+
+===== Thank You for using Swiggy! ✨ =====
+
+🧾 How to Compile and Run
+
+Open the project in any IDE (Eclipse / IntelliJ / VS Code)
+or from terminal:
+
+cd SwiggyProject/src
+javac com/swiggy/base/*.java com/swiggy/orders/*.java com/swiggy/main/*.java
+java com.swiggy.main.SwiggyApp
