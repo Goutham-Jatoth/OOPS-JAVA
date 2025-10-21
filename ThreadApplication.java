@@ -188,4 +188,95 @@ public class ThreadApplication {
     public static void main(String[] args) {
         new multithreadapplication().start();
     }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import java.util.Random;
+
+class RandomNumberThread implements Runnable {
+    Thread t;
+    Random r;
+    static int number;
+
+    public RandomNumberThread() {
+        t = new Thread(this);
+        r = new Random();
+        t.start();
+    }
+
+    public void run() {
+        try {
+            while (true) {
+                number = r.nextInt(100); // generate random number
+                System.out.println("\nGenerated Number: " + number);
+                Thread.sleep(1000);
+
+                if (number % 2 == 0) {
+                    new SquareThread(number);
+                } else {
+                    new CubeThread(number);
+                }
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Random Number Thread Interrupted");
+        }
+    }
+}
+
+class SquareThread implements Runnable {
+    int num;
+    Thread t;
+
+    public SquareThread(int n) {
+        num = n;
+        t = new Thread(this);
+        t.start();
+    }
+
+    public void run() {
+        System.out.println("Square of " + num + " = " + (num * num));
+    }
+}
+
+class CubeThread implements Runnable {
+    int num;
+    Thread t;
+
+    public CubeThread(int n) {
+        num = n;
+        t = new Thread(this);
+        t.start();
+    }
+
+    public void run() {
+        System.out.println("Cube of " + num + " = " + (num * num * num));
+    }
+}
+
+public class MultiThreadExample {
+    public static void main(String[] args) {
+        new RandomNumberThread();
+    }
 }
