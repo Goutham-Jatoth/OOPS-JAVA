@@ -1,0 +1,366 @@
+📁 Project Structure
+src/
+ └── com/
+      └── payments/
+           ├── contracts/
+           │     └── PaymentGateway.java
+           ├── core/
+           │     └── AbstractPaymentProcessor.java
+           ├── impl/
+           │     ├── CreditCardProcessor.java
+           │     └── NetBankingProcessor.java
+           └── app/
+                 └── Main.java
+
+🧩 Code Files
+1️⃣ PaymentGateway.java
+
+📦 com.payments.contracts
+
+package com.payments.contracts;
+
+public interface PaymentGateway {
+
+    // Abstract method
+    void validateCredentials();
+
+    // Default method (Java 8)
+    default void timeoutCheck() {
+        logDetail("Checking for network timeout...");
+    }
+
+    // Static method (Java 8)
+    static boolean isGatewayAvailable() {
+        System.out.println("Performing gateway availability check...");
+        return true;
+    }
+
+    // Private method (Java 9)
+    private void logDetail(String msg) {
+        System.out.println("Interface Log: " + msg);
+    }
+}
+
+2️⃣ AbstractPaymentProcessor.java
+
+📦 com.payments.core
+
+package com.payments.core;
+
+import com.payments.contracts.PaymentGateway;
+
+public abstract class AbstractPaymentProcessor implements PaymentGateway {
+
+    // Template method (final to prevent override)
+    public final void processTransaction(double amount) {
+        System.out.println("\n--- Starting Transaction ---");
+        System.out.println("Transaction Amount: ₹" + amount);
+
+        // Step 1: Validate credentials (abstract method)
+        validateCredentials();
+
+        // Step 2: Timeout check (from interface)
+        timeoutCheck();
+
+        // Step 3: Confirm transaction
+        confirmTransaction();
+
+        System.out.println("--- Transaction Completed ---\n");
+    }
+
+    // Common step for all payment processors
+    protected void confirmTransaction() {
+        System.out.println("Confirming transaction...");
+    }
+}
+
+3️⃣ CreditCardProcessor.java
+
+📦 com.payments.impl
+
+package com.payments.impl;
+
+import com.payments.core.AbstractPaymentProcessor;
+
+public class CreditCardProcessor extends AbstractPaymentProcessor {
+
+    @Override
+    public void validateCredentials() {
+        System.out.println("Validating credit card details (CVV, Expiry Date, etc.)...");
+    }
+
+    // Overriding the default method
+    @Override
+    public void timeoutCheck() {
+        System.out.println("Performing secure credit card timeout check...");
+    }
+}
+
+4️⃣ NetBankingProcessor.java
+
+📦 com.payments.impl
+
+package com.payments.impl;
+
+import com.payments.core.AbstractPaymentProcessor;
+
+public class NetBankingProcessor extends AbstractPaymentProcessor {
+
+    @Override
+    public void validateCredentials() {
+        System.out.println("Verifying NetBanking credentials (User ID, Password, OTP)...");
+    }
+
+    // Uses the default timeoutCheck() from interface
+}
+
+5️⃣ Main.java
+
+📦 com.payments.app
+
+package com.payments.app;
+
+import com.payments.contracts.PaymentGateway;
+import com.payments.core.AbstractPaymentProcessor;
+import com.payments.impl.CreditCardProcessor;
+import com.payments.impl.NetBankingProcessor;
+
+public class Main {
+    public static void main(String[] args) {
+
+        // Step 1: Check if gateway is available
+        if (PaymentGateway.isGatewayAvailable()) {
+            System.out.println("✅ Payment Gateway is available.\n");
+        }
+
+        // Step 2: Use polymorphism to handle different processors
+        AbstractPaymentProcessor creditCard = new CreditCardProcessor();
+        AbstractPaymentProcessor netBanking = new NetBankingProcessor();
+
+        // Step 3: Process transactions
+        creditCard.processTransaction(2500.75);
+        netBanking.processTransaction(5200.00);
+    }
+}
+
+🧠 Output Example
+Performing gateway availability check...
+✅ Payment Gateway is available.
+
+
+--- Starting Transaction ---
+Transaction Amount: ₹2500.75
+Validating credit card details (CVV, Expiry Date, etc.)...
+Performing secure credit card timeout check...
+Confirming transaction...
+--- Transaction Completed ---
+
+
+--- Starting Transaction ---
+Transaction Amount: ₹5200.0
+Verifying NetBanking credentials (User ID, Password, OTP)...
+Interface Log: Checking for network timeout...
+Confirming transaction...
+--- Transaction Completed ---
+
+✅ Concepts Demonstrated
+Concept	Where It’s Used
+Abstract Class	AbstractPaymentProcessor
+Interface with Static, Default, Private methods	PaymentGateway
+Method Overriding	timeoutCheck() in CreditCardProcessor
+Polymorphism	AbstractPaymentProcessor references in Main.java
+Template Method Pattern	processTransaction() in AbstractPaymentProcessor
+Package Structure	Clean modular organization (contracts, core, impl, app)
+
+
+
+
+
+
+
+
+
+
+
+
+JAVA MINI PROJECT RECORD
+Title:
+
+Simple Java Project on Abstract Classes & Interfaces – Payment Processing System
+
+Objective:
+
+To design and implement a Java program that demonstrates:
+
+The use of Abstract Classes for defining core structure and shared logic.
+
+The use of Interfaces for defining a strict contract of operations.
+
+Interface Enhancements like default, static, and private methods.
+
+The concept of Method Overriding and Polymorphism to handle multiple payment types uniformly.
+
+The use of Packages to create a professional, modular structure.
+
+Theory:
+
+In Java, abstraction allows developers to hide complex logic and expose only essential operations.
+This can be achieved using abstract classes and interfaces.
+
+🔹 Abstract Class
+
+An abstract class can have both abstract (unimplemented) and concrete (implemented) methods.
+It defines a base structure that subclasses extend and provide specific implementations.
+In this project, it acts as a template for the payment process.
+
+🔹 Interface
+
+An interface defines a strict contract that all implementing classes must follow.
+Since Java 8 and 9, interfaces can also contain:
+
+Default Methods – methods with default implementations.
+
+Static Methods – utility methods called via the interface name.
+
+Private Methods – helper methods used within the interface only.
+
+🔹 Template Method Pattern
+
+The abstract class defines a final method that represents the complete workflow (e.g., processTransaction()), while subclasses customize only certain parts.
+
+🔹 Polymorphism
+
+By referring to objects through their abstract superclass, the same method can exhibit different behaviors depending on the object type (e.g., CreditCard vs. NetBanking).
+
+Program:
+📦 com.payments.contracts.PaymentGateway.java
+package com.payments.contracts;
+
+public interface PaymentGateway {
+
+    void validateCredentials();
+
+    default void timeoutCheck() {
+        logDetail("Checking for network timeout...");
+    }
+
+    static boolean isGatewayAvailable() {
+        System.out.println("Performing gateway availability check...");
+        return true;
+    }
+
+    private void logDetail(String msg) {
+        System.out.println("Interface Log: " + msg);
+    }
+}
+
+📦 com.payments.core.AbstractPaymentProcessor.java
+package com.payments.core;
+
+import com.payments.contracts.PaymentGateway;
+
+public abstract class AbstractPaymentProcessor implements PaymentGateway {
+
+    public final void processTransaction(double amount) {
+        System.out.println("\n--- Starting Transaction ---");
+        System.out.println("Transaction Amount: ₹" + amount);
+
+        validateCredentials();
+        timeoutCheck();
+        confirmTransaction();
+
+        System.out.println("--- Transaction Completed ---\n");
+    }
+
+    protected void confirmTransaction() {
+        System.out.println("Confirming transaction...");
+    }
+}
+
+📦 com.payments.impl.CreditCardProcessor.java
+package com.payments.impl;
+
+import com.payments.core.AbstractPaymentProcessor;
+
+public class CreditCardProcessor extends AbstractPaymentProcessor {
+
+    @Override
+    public void validateCredentials() {
+        System.out.println("Validating credit card details (CVV, Expiry Date, etc.)...");
+    }
+
+    @Override
+    public void timeoutCheck() {
+        System.out.println("Performing secure credit card timeout check...");
+    }
+}
+
+📦 com.payments.impl.NetBankingProcessor.java
+package com.payments.impl;
+
+import com.payments.core.AbstractPaymentProcessor;
+
+public class NetBankingProcessor extends AbstractPaymentProcessor {
+
+    @Override
+    public void validateCredentials() {
+        System.out.println("Verifying NetBanking credentials (User ID, Password, OTP)...");
+    }
+}
+
+📦 com.payments.app.Main.java
+package com.payments.app;
+
+import com.payments.contracts.PaymentGateway;
+import com.payments.core.AbstractPaymentProcessor;
+import com.payments.impl.CreditCardProcessor;
+import com.payments.impl.NetBankingProcessor;
+
+public class Main {
+    public static void main(String[] args) {
+
+        if (PaymentGateway.isGatewayAvailable()) {
+            System.out.println("✅ Payment Gateway is available.\n");
+        }
+
+        AbstractPaymentProcessor creditCard = new CreditCardProcessor();
+        AbstractPaymentProcessor netBanking = new NetBankingProcessor();
+
+        creditCard.processTransaction(2500.75);
+        netBanking.processTransaction(5200.00);
+    }
+}
+
+Sample Output:
+Performing gateway availability check...
+✅ Payment Gateway is available.
+
+
+--- Starting Transaction ---
+Transaction Amount: ₹2500.75
+Validating credit card details (CVV, Expiry Date, etc.)...
+Performing secure credit card timeout check...
+Confirming transaction...
+--- Transaction Completed ---
+
+
+--- Starting Transaction ---
+Transaction Amount: ₹5200.0
+Verifying NetBanking credentials (User ID, Password, OTP)...
+Interface Log: Checking for network timeout...
+Confirming transaction...
+--- Transaction Completed ---
+
+Result:
+
+The Java program was successfully executed and demonstrated:
+
+Use of Abstract Class and Interface concepts.
+
+Implementation of static, default, and private methods in an interface.
+
+Method Overriding and Polymorphism for flexible behavior.
+
+Proper use of package structure and template method pattern.
+
+✅ Hence, the project successfully simulates a Payment Processing System using Abstract Classes & Interfaces.
