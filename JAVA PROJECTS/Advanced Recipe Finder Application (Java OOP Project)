@@ -1,0 +1,320 @@
+✅ PROJECT TITLE
+
+Advanced Recipe Finder Application (Java OOP Project)
+
+✅ PROJECT STRUCTURE
+src/
+ ├── model/
+ │     ├── Recipe.java
+ │     ├── Ingredient.java
+ │     ├── Difficulty.java
+ ├── storage/
+ │     ├── RecipeDatabase.java
+ ├── service/
+ │     ├── RecipeService.java
+ ├── ui/
+ │     ├── RecipeApp.java
+ └── Main.java
+
+✅ FULL CODE BELOW (ALL FILES)
+
+Copy each file into your project with the same name.
+
+📌 model/Ingredient.java
+package model;
+
+public class Ingredient {
+    private String name;
+    private double quantity;
+    private String unit;
+
+    public Ingredient(String name, double quantity, String unit) {
+        this.name = name;
+        this.quantity = quantity;
+        this.unit = unit;
+    }
+
+    public String getName() { return name; }
+    public double getQuantity() { return quantity; }
+    public String getUnit() { return unit; }
+
+    @Override
+    public String toString() {
+        return quantity + " " + unit + " " + name;
+    }
+}
+
+📌 model/Difficulty.java
+package model;
+
+public enum Difficulty {
+    EASY,
+    MEDIUM,
+    HARD
+}
+
+📌 model/Recipe.java
+package model;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Recipe {
+    private String id;
+    private String name;
+    private List<Ingredient> ingredients;
+    private String category;
+    private int cookingTimeMinutes;
+    private Difficulty difficulty;
+    private boolean isVegetarian;
+    private String instructions;
+
+    public Recipe(String id, String name, List<Ingredient> ingredients, String category,
+                  int cookingTimeMinutes, Difficulty difficulty, boolean isVegetarian,
+                  String instructions) {
+
+        this.id = id;
+        this.name = name;
+        this.ingredients = ingredients;
+        this.category = category;
+        this.cookingTimeMinutes = cookingTimeMinutes;
+        this.difficulty = difficulty;
+        this.isVegetarian = isVegetarian;
+        this.instructions = instructions;
+    }
+
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public List<Ingredient> getIngredients() { return ingredients; }
+    public String getCategory() { return category; }
+    public int getCookingTimeMinutes() { return cookingTimeMinutes; }
+    public Difficulty getDifficulty() { return difficulty; }
+    public boolean isVegetarian() { return isVegetarian; }
+    public String getInstructions() { return instructions; }
+
+    /** ingredient matching */
+    public boolean containsIngredient(String keyword) {
+        return ingredients.stream()
+                .anyMatch(i -> i.getName().toLowerCase().contains(keyword.toLowerCase()));
+    }
+
+    @Override
+    public String toString() {
+        return "Recipe: " + name + "\n" +
+               "Category: " + category + "\n" +
+               "Time: " + cookingTimeMinutes + " mins\n" +
+               "Difficulty: " + difficulty + "\n" +
+               "Vegetarian: " + (isVegetarian ? "Yes" : "No") + "\n" +
+               "Ingredients: " + ingredients.stream()
+                       .map(Ingredient::toString)
+                       .collect(Collectors.joining(", ")) + "\n\n" +
+               "Instructions:\n" + instructions + "\n";
+    }
+}
+
+📌 storage/RecipeDatabase.java
+
+Simple text-based persistent storage.
+
+package storage;
+
+import model.*;
+import java.io.*;
+import java.util.*;
+
+public class RecipeDatabase {
+
+    private static final String FILE = "recipes.db";
+
+    public static void saveRecipes(List<Recipe> recipes) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE))) {
+            oos.writeObject(new ArrayList<>(recipes));
+        } catch (Exception e) {
+            System.out.println("Error saving database: " + e.getMessage());
+        }
+    }
+
+    public static List<Recipe> loadRecipes() {
+        File f = new File(FILE);
+        if (!f.exists()) return new ArrayList<>();
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE))) {
+            return (List<Recipe>) ois.readObject();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+}
+
+📌 service/RecipeService.java
+package service;
+
+import model.*;
+import storage.RecipeDatabase;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class RecipeService {
+
+    private List<Recipe> recipes;
+
+    public RecipeService() {
+        recipes = RecipeDatabase.loadRecipes();
+    }
+
+    public void addRecipe(Recipe recipe) {
+        recipes.add(recipe);
+        RecipeDatabase.saveRecipes(recipes);
+    }
+
+    public List<Recipe> searchByIngredient(String ingredient) {
+        return recipes.stream()
+                .filter(r -> r.containsIngredient(ingredient))
+                .collect(Collectors.toList());
+    }
+
+    public List<Recipe> filterByCategory(String category) {
+        return recipes.stream()
+                .filter(r -> r.getCategory().equalsIgnoreCase(category))
+                .collect(Collectors.toList());
+    }
+
+    public List<Recipe> filterByTime(int maxMinutes) {
+        return recipes.stream()
+                .filter(r -> r.getCookingTimeMinutes() <= maxMinutes)
+                .collect(Collectors.toList());
+    }
+
+    public List<Recipe> filterVegetarian() {
+        return recipes.stream()
+                .filter(Recipe::isVegetarian)
+                .collect(Collectors.toList());
+    }
+
+    public List<Recipe> getAllRecipes() {
+        return recipes;
+    }
+}
+
+📌 ui/RecipeApp.java (Console UI)
+package ui;
+
+import model.*;
+import service.RecipeService;
+
+import java.util.*;
+
+public class RecipeApp {
+
+    private Scanner sc = new Scanner(System.in);
+    private RecipeService service = new RecipeService();
+
+    public void start() {
+        while (true) {
+            System.out.println("\n===== ADVANCED RECIPE FINDER =====");
+            System.out.println("1. Add New Recipe");
+            System.out.println("2. Search by Ingredient");
+            System.out.println("3. Filter by Category");
+            System.out.println("4. Filter by Cooking Time");
+            System.out.println("5. Show Only Vegetarian Recipes");
+            System.out.println("6. Show All Recipes");
+            System.out.println("0. Exit");
+            System.out.print("Enter choice: ");
+
+            switch (sc.nextInt()) {
+                case 1 -> addRecipe();
+                case 2 -> searchByIngredient();
+                case 3 -> filterCategory();
+                case 4 -> filterTime();
+                case 5 -> showVeg();
+                case 6 -> showAll();
+                case 0 -> System.exit(0);
+                default -> System.out.println("Invalid option!");
+            }
+        }
+    }
+
+    private void addRecipe() {
+        sc.nextLine();
+        System.out.print("Recipe Name: ");
+        String name = sc.nextLine();
+
+        System.out.print("Category (Breakfast/Lunch/Dinner/Dessert): ");
+        String category = sc.nextLine();
+
+        System.out.print("Cooking Time (minutes): ");
+        int time = sc.nextInt();
+
+        System.out.print("Difficulty (1=EASY, 2=MEDIUM, 3=HARD): ");
+        Difficulty difficulty = Difficulty.values()[sc.nextInt() - 1];
+
+        System.out.print("Vegetarian? (true/false): ");
+        boolean veg = sc.nextBoolean();
+        sc.nextLine();
+
+        List<Ingredient> ingredients = new ArrayList<>();
+        System.out.println("Enter ingredients (type 'done' to stop):");
+        while (true) {
+            System.out.print("Ingredient name: ");
+            String nameIng = sc.nextLine();
+            if (nameIng.equalsIgnoreCase("done")) break;
+
+            System.out.print("Quantity: ");
+            double qty = sc.nextDouble();
+
+            System.out.print("Unit: ");
+            sc.nextLine();
+            String unit = sc.nextLine();
+
+            ingredients.add(new Ingredient(nameIng, qty, unit));
+        }
+
+        System.out.print("Enter instructions: ");
+        String instructions = sc.nextLine();
+
+        String id = UUID.randomUUID().toString();
+
+        Recipe recipe = new Recipe(id, name, ingredients, category, time,
+                difficulty, veg, instructions);
+
+        service.addRecipe(recipe);
+        System.out.println("Recipe added successfully!");
+    }
+
+    private void searchByIngredient() {
+        sc.nextLine();
+        System.out.print("Enter ingredient: ");
+        String ing = sc.nextLine();
+        service.searchByIngredient(ing).forEach(System.out::println);
+    }
+
+    private void filterCategory() {
+        sc.nextLine();
+        System.out.print("Enter category: ");
+        String cat = sc.nextLine();
+        service.filterByCategory(cat).forEach(System.out::println);
+    }
+
+    private void filterTime() {
+        System.out.print("Max cooking time: ");
+        int t = sc.nextInt();
+        service.filterByTime(t).forEach(System.out::println);
+    }
+
+    private void showVeg() {
+        service.filterVegetarian().forEach(System.out::println);
+    }
+
+    private void showAll() {
+        service.getAllRecipes().forEach(System.out::println);
+    }
+}
+
+📌 Main.java
+import ui.RecipeApp;
+
+public class Main {
+    public static void main(String[] args) {
+        new RecipeApp().start();
+    }
+}
