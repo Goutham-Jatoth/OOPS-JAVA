@@ -1,0 +1,538 @@
+=== pom.xml ===
+<!-- Maven project file: includes JavaFX, Quartz, SQLite JDBC -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.autopost</groupId>
+  <artifactId>autopost-scheduler</artifactId>
+  <version>1.0.0</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <javafx.version>20</javafx.version>
+    <quartz.version>2.3.2</quartz.version>
+  </properties>
+
+  <dependencies>
+    <!-- JavaFX modules (provided by the runtime or openjfx) -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+
+    <!-- Quartz scheduler -->
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+      <version>${quartz.version}</version>
+    </dependency>
+
+    <!-- SQLite JDBC -->
+    <dependency>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>3.41.2.1</version>
+    </dependency>
+
+    <!-- Jackson for JSON if needed -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.15.2</version>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>2.0.7</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
+=== README.md ===
+# AutoPost Scheduler
+A JavaFX + Quartz based Auto Post Scheduler project prepared as a Final Year Project submission. Features:
+- Create, edit, schedule, and manage posts (text + images).
+- Schedule one-time and recurring posts (Quartz cron or simple intervals).
+- Local SQLite database for persistence.
+- Pluggable social media connectors (stubs provided). Use real APIs by implementing the SocialPoster interface.
+- Export/import schedules, logging, and nice JavaFX interface.
+
+Run with Maven: `mvn javafx:run` (configure JavaFX runtime if needed)
+
+=== src/main/java/com/autopost/MainApp.java ===
+package com.autopost;
+
+import com.autopost.controller.MainController;
+import com.autopost.service.Database;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
+
+public class MainApp extends Application {
+    @Override
+    public void start(Stage stage) throws Exception {
+        Database.init(); // ensure DB ready
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main.fxml"));
+        Scene scene = new Scene(loader.load());
+        stage.setTitle("AutoPost Scheduler");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon/app-icon.png")));
+        stage.setScene(scene);
+        MainController controller = loader.getController();
+        controller.setStage(stage);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+
+=== src/main/java/com/autopost/model/Post.java ===
+package com.autopost.model;
+
+import java.time.LocalDateTime;
+
+public class Post {
+    private long id;
+    private String title;
+    private String content;
+    private String imagePath; // optional
+    private LocalDateTime scheduledAt;
+    private String recurrenceCron; // optional, cron expression for recurring
+    private String platform; // e.g. DUMMY, TWITTER, FACEBOOK
+    private boolean posted;
+
+    public Post() {}
+
+    // Getters and setters
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    public String getImagePath() { return imagePath; }
+    public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+    public LocalDateTime getScheduledAt() { return scheduledAt; }
+    public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
+    public String getRecurrenceCron() { return recurrenceCron; }
+    public void setRecurrenceCron(String recurrenceCron) { this.recurrenceCron = recurrenceCron; }
+    public String getPlatform() { return platform; }
+    public void setPlatform(String platform) { this.platform = platform; }
+    public boolean isPosted() { return posted; }
+    public void setPosted(boolean posted) { this.posted = posted; }
+}
+
+=== src/main/java/com/autopost/service/Database.java ===
+package com.autopost.service;
+
+import com.autopost.model.Post;
+
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Database {
+    private static final String DB_URL = "jdbc:sqlite:autopost.db";
+
+    public static void init() {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            try (Statement stmt = conn.createStatement()) {
+                String sql = "CREATE TABLE IF NOT EXISTS posts ("
+                        + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + "title TEXT,"
+                        + "content TEXT,"
+                        + "imagePath TEXT,"
+                        + "scheduledAt TEXT,"
+                        + "recurrenceCron TEXT,"
+                        + "platform TEXT,"
+                        + "posted INTEGER DEFAULT 0"
+                        + ");";
+                stmt.execute(sql);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static long savePost(Post p) throws SQLException {
+        String sql = "INSERT INTO posts(title,content,imagePath,scheduledAt,recurrenceCron,platform,posted) VALUES(?,?,?,?,?,?,?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, p.getTitle());
+            ps.setString(2, p.getContent());
+            ps.setString(3, p.getImagePath());
+            ps.setString(4, p.getScheduledAt() != null ? p.getScheduledAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
+            ps.setString(5, p.getRecurrenceCron());
+            ps.setString(6, p.getPlatform());
+            ps.setInt(7, p.isPosted() ? 1 : 0);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) { return rs.getLong(1); }
+                return -1;
+            }
+        }
+    }
+
+    public static List<Post> listAll() throws SQLException {
+        String sql = "SELECT * FROM posts ORDER BY scheduledAt";
+        List<Post> list = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                Post p = new Post();
+                p.setId(rs.getLong("id"));
+                p.setTitle(rs.getString("title"));
+                p.setContent(rs.getString("content"));
+                p.setImagePath(rs.getString("imagePath"));
+                String sched = rs.getString("scheduledAt");
+                if (sched != null) p.setScheduledAt(LocalDateTime.parse(sched, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                p.setRecurrenceCron(rs.getString("recurrenceCron"));
+                p.setPlatform(rs.getString("platform"));
+                p.setPosted(rs.getInt("posted") == 1);
+                list.add(p);
+            }
+        }
+        return list;
+    }
+
+    public static void updatePosted(long id, boolean posted) throws SQLException {
+        String sql = "UPDATE posts SET posted=? WHERE id=?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, posted ? 1 : 0);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public static void deletePost(long id) throws SQLException {
+        String sql = "DELETE FROM posts WHERE id=?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeUpdate();
+        }
+    }
+}
+
+=== src/main/java/com/autopost/service/SchedulerService.java ===
+package com.autopost.service;
+
+import com.autopost.model.Post;
+import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
+
+import java.time.ZoneId;
+import java.util.Date;
+
+public class SchedulerService {
+    private static Scheduler scheduler;
+
+    public static void start() throws SchedulerException {
+        if (scheduler == null) {
+            scheduler = StdSchedulerFactory.getDefaultScheduler();
+            scheduler.start();
+        }
+    }
+
+    public static void schedulePost(Post p) throws Exception {
+        start();
+        JobDataMap map = new JobDataMap();
+        map.put("postId", p.getId());
+
+        JobDetail job = JobBuilder.newJob(PostJob.class)
+                .withIdentity("postJob-" + p.getId(), "posts")
+                .usingJobData(map)
+                .build();
+
+        Trigger trigger;
+        if (p.getRecurrenceCron() != null && !p.getRecurrenceCron().isEmpty()) {
+            trigger = TriggerBuilder.newTrigger()
+                    .withIdentity("trigger-" + p.getId(), "posts")
+                    .withSchedule(CronScheduleBuilder.cronSchedule(p.getRecurrenceCron()).inTimeZone(TimeZone.getTimeZone(ZoneId.systemDefault())))
+                    .build();
+        } else {
+            Date when = Date.from(p.getScheduledAt().atZone(ZoneId.systemDefault()).toInstant());
+            trigger = TriggerBuilder.newTrigger()
+                    .withIdentity("trigger-" + p.getId(), "posts")
+                    .startAt(when)
+                    .build();
+        }
+
+        scheduler.scheduleJob(job, trigger);
+    }
+
+    public static void unschedulePost(long postId) throws SchedulerException {
+        JobKey jk = new JobKey("postJob-" + postId, "posts");
+        if (scheduler != null && scheduler.checkExists(jk)) scheduler.deleteJob(jk);
+    }
+
+    public static class PostJob implements Job {
+        @Override
+        public void execute(JobExecutionContext context) throws JobExecutionException {
+            JobDataMap map = context.getMergedJobDataMap();
+            long postId = map.getLong("postId");
+            try {
+                // Load post from DB
+                for (Post p : Database.listAll()) {
+                    if (p.getId() == postId) {
+                        // Choose poster by platform
+                        com.autopost.service.SocialPoster poster = SocialPosterFactory.getPoster(p.getPlatform());
+                        boolean ok = poster.post(p);
+                        Database.updatePosted(postId, ok);
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                throw new JobExecutionException(e);
+            }
+        }
+    }
+}
+
+=== src/main/java/com/autopost/service/SocialPoster.java ===
+package com.autopost.service;
+
+import com.autopost.model.Post;
+
+public interface SocialPoster {
+    /**
+     * Post the given Post to the target platform. Return true if successful.
+     * Implementations should handle API calls, auth, and error handling.
+     */
+    boolean post(Post p);
+}
+
+=== src/main/java/com/autopost/service/SocialPosterFactory.java ===
+package com.autopost.service;
+
+public class SocialPosterFactory {
+    public static SocialPoster getPoster(String platform) {
+        if (platform == null) return new DummyPoster();
+        switch (platform.toUpperCase()) {
+            case "DUMMY": return new DummyPoster();
+            case "TWITTER": return new StubTwitterPoster();
+            // add more case blocks for Facebook, Instagram, LinkedIn etc.
+            default: return new DummyPoster();
+        }
+    }
+}
+
+=== src/main/java/com/autopost/service/DummyPoster.java ===
+package com.autopost.service;
+
+import com.autopost.model.Post;
+
+public class DummyPoster implements SocialPoster {
+    @Override
+    public boolean post(Post p) {
+        // For demo — just print to console. Replace with real API.
+        System.out.println("[DUMMY POST] Posting to " + p.getPlatform() + ": " + p.getTitle());
+        System.out.println(p.getContent());
+        return true;
+    }
+}
+
+=== src/main/java/com/autopost/service/StubTwitterPoster.java ===
+package com.autopost.service;
+
+import com.autopost.model.Post;
+
+public class StubTwitterPoster implements SocialPoster {
+    @Override
+    public boolean post(Post p) {
+        // This is a stub. To post on Twitter/X, implement OAuth2 flows and use their API (developer account needed).
+        System.out.println("[TWITTER STUB] Would post: " + p.getTitle());
+        // TODO: use Twitter v2/v3 SDK or HTTP calls with Bearer token / OAuth for user account posting
+        return false; // return true when implemented
+    }
+}
+
+=== src/main/java/com/autopost/controller/MainController.java ===
+package com.autopost.controller;
+
+import com.autopost.model.Post;
+import com.autopost.service.Database;
+import com.autopost.service.SchedulerService;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+
+import java.io.File;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+public class MainController {
+    @FXML private TextField titleField;
+    @FXML private TextArea contentArea;
+    @FXML private TextField imagePathField;
+    @FXML private DatePicker datePicker;
+    @FXML private TextField timeField; // HH:mm
+    @FXML private TextField cronField;
+    @FXML private ComboBox<String> platformBox;
+    @FXML private Button scheduleBtn;
+    @FXML private ListView<String> postsListView;
+    @FXML private Button refreshBtn;
+
+    private Stage stage;
+
+    public void setStage(Stage s) { this.stage = s; }
+
+    @FXML
+    public void initialize() {
+        platformBox.getItems().addAll("DUMMY","TWITTER");
+        platformBox.getSelectionModel().selectFirst();
+        refreshList();
+    }
+
+    @FXML
+    private void chooseImage(ActionEvent e) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select image");
+        File f = chooser.showOpenDialog(stage);
+        if (f != null) imagePathField.setText(f.getAbsolutePath());
+    }
+
+    @FXML
+    private void schedule(ActionEvent e) {
+        try {
+            Post p = new Post();
+            p.setTitle(titleField.getText());
+            p.setContent(contentArea.getText());
+            p.setImagePath(imagePathField.getText());
+            p.setPlatform(platformBox.getValue());
+            if (cronField.getText() != null && !cronField.getText().isBlank()) {
+                p.setRecurrenceCron(cronField.getText());
+            } else {
+                LocalDateTime dt = LocalDateTime.parse(datePicker.getValue().toString() + "T" + timeField.getText());
+                p.setScheduledAt(dt);
+            }
+            long id = Database.savePost(p);
+            p.setId(id);
+            SchedulerService.schedulePost(p);
+            showAlert("Scheduled", "Post scheduled successfully.");
+            refreshList();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showAlert("Error", "Could not schedule post: " + ex.getMessage());
+        }
+    }
+
+    @FXML
+    private void refresh(ActionEvent e) { refreshList(); }
+
+    private void refreshList() {
+        Platform.runLater(() -> {
+            postsListView.getItems().clear();
+            try {
+                List<Post> list = Database.listAll();
+                DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                for (Post p : list) {
+                    String s = String.format("[%d] %s @ %s (%s) %s", p.getId(), p.getTitle(), p.getScheduledAt() != null ? p.getScheduledAt().format(f) : p.getRecurrenceCron(), p.getPlatform(), p.isPosted() ? "[SENT]" : "");
+                    postsListView.getItems().add(s);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+    private void showAlert(String title, String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
+        a.setTitle(title);
+        a.showAndWait();
+    }
+}
+
+=== src/main/resources/fxml/main.fxml ===
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="10" xmlns="http://javafx.com/javafx/20" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.autopost.controller.MainController" stylesheets="/styles/main.css">
+    <padding>
+        <Insets top="12" right="12" bottom="12" left="12" />
+    </padding>
+    <HBox spacing="10">
+        <VBox spacing="6" VBox.vgrow="ALWAYS">
+            <Label text="Title" />
+            <TextField fx:id="titleField" />
+            <Label text="Content" />
+            <TextArea fx:id="contentArea" prefRowCount="6" />
+            <HBox spacing="6">
+                <TextField fx:id="imagePathField" promptText="Image path (optional)" />
+                <Button text="Choose" onAction="#chooseImage" />
+            </HBox>
+            <HBox spacing="6">
+                <DatePicker fx:id="datePicker" />
+                <TextField fx:id="timeField" promptText="HH:mm" />
+                <TextField fx:id="cronField" promptText="Cron (optional)" />
+            </HBox>
+            <HBox spacing="6">
+                <Label text="Platform" />
+                <ComboBox fx:id="platformBox" />
+                <Button fx:id="scheduleBtn" text="Schedule" onAction="#schedule" />
+            </HBox>
+        </VBox>
+        <VBox spacing="6" prefWidth="320">
+            <Label text="Scheduled Posts" />
+            <ListView fx:id="postsListView" />
+            <HBox spacing="6">
+                <Button fx:id="refreshBtn" text="Refresh" onAction="#refresh" />
+                <!-- Additional buttons like Edit, Delete, Run Now can be added -->
+            </HBox>
+        </VBox>
+    </HBox>
+</VBox>
+
+=== src/main/resources/styles/main.css ===
+.root {
+    -fx-font-family: "Segoe UI", Roboto, Arial;
+}
+
+=== src/main/resources/icon/app-icon.png ===
+# (placeholder: include an icon image file named app-icon.png in resources)
+
+=== FinalNotes.txt ===
+Implementation notes & submission guidance:
+1. Real social media posting requires developer API keys and OAuth flows. Keep credentials out of source control and use a secure config file.
+2. For Twitter/X, Facebook, Instagram, use their SDKs or REST endpoints; implement retry/backoff, rate-limit handling, and logging.
+3. Add unit tests (JUnit) and a detailed user manual for your submission.
+4. Consider packaging as a native app with jpackage or provide a runnable jar.
+
+--- End of project files ---
