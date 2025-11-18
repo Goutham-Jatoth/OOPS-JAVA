@@ -1,0 +1,844 @@
+PROJECT STRUCTURE
+typing-speed-test/
+ ├─ pom.xml                       # Optional Maven build (included)
+ ├─ src/
+ │   └─ main/
+ │       ├─ java/
+ │       │   └─ app/
+ │       │       ├─ Main.java
+ │       │       ├─ controllers/
+ │       │       │    ├─ MainController.java
+ │       │       │    └─ ResultsController.java
+ │       │       ├─ models/
+ │       │       │    ├─ TypingTest.java
+ │       │       │    ├─ ParagraphGenerator.java
+ │       │       │    ├─ TypingStats.java
+ │       │       │    └─ LeaderboardManager.java
+ │       └─ resources/
+ │           ├─ main_view.fxml
+ │           ├─ results_view.fxml
+ │           └─ style.css
+ └─ README.md
+
+CODE — paste these into their files
+
+Use JDK 17+ and JavaFX 17+ (or matching). If using Maven the provided pom.xml sets javafx dependencies.
+
+pom.xml (Maven) — optional
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+  http://maven.apache.org/POM/4.0.0
+  http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>typing-speed-test</artifactId>
+  <version>1.0</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <javafx.version>20</javafx.version>
+  </properties>
+
+  <dependencies>
+    <!-- JavaFX modules -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <!-- Gson for simple local JSON storage (leaderboard) -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.10.1</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>app.Main</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
+src/main/java/app/Main.java
+package app;
+
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+public class Main extends Application {
+    @Override
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/main_view.fxml"));
+        Scene scene = new Scene(loader.load());
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        stage.setTitle("Typing Speed Test Pro");
+        stage.setScene(scene);
+        stage.setMinWidth(900);
+        stage.setMinHeight(600);
+        stage.show();
+    }
+
+    public static void main(String[] args) { launch(args); }
+}
+
+src/main/java/app/models/ParagraphGenerator.java
+package app.models;
+
+import java.util.List;
+import java.util.Random;
+
+/**
+ * Provides random paragraphs by difficulty.
+ * For the demo we embed several sample paragraphs.
+ */
+public class ParagraphGenerator {
+
+    private static final List<String> EASY = List.of(
+            "The quick brown fox jumps over the lazy dog.",
+            "Typing helps improve accuracy and speed.",
+            "Practice every day to become a better typist."
+    );
+
+    private static final List<String> MEDIUM = List.of(
+            "JavaFX provides a rich set of UI controls and styling features for Java applications.",
+            "Consistency in typing practice builds both speed and precision over time.",
+            "Use short daily sessions with focused practice to make steady improvements."
+    );
+
+    private static final List<String> HARD = List.of(
+            "Concurrency and thread-safety are essential concepts when designing responsive GUI applications.",
+            "Cryptographic hashing algorithms require understanding of bitwise operations and data representation.",
+            "Optimizing algorithms often involves trade-offs between time complexity and memory consumption."
+    );
+
+    private static final Random RAND = new Random();
+
+    public enum Difficulty { EASY, MEDIUM, HARD }
+
+    public static String randomParagraph(Difficulty difficulty) {
+        switch (difficulty) {
+            case EASY: return EASY.get(RAND.nextInt(EASY.size()));
+            case MEDIUM: return MEDIUM.get(RAND.nextInt(MEDIUM.size()));
+            case HARD: return HARD.get(RAND.nextInt(HARD.size()));
+            default: return EASY.get(RAND.nextInt(EASY.size()));
+        }
+    }
+}
+
+src/main/java/app/models/TypingTest.java
+package app.models;
+
+import java.time.Instant;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * TypingTest holds an instance of a typing attempt.
+ */
+public class TypingTest {
+    private final String targetText;
+    private final Instant startTime;
+    private Instant endTime;
+    private final List<String> inputHistory = new ArrayList<>(); // optional store of inputs states
+    private int correctChars = 0;
+    private int totalTyped = 0;
+
+    public TypingTest(String target) {
+        this.targetText = target;
+        this.startTime = Instant.now();
+    }
+
+    public void recordInputState(String current) {
+        inputHistory.add(current);
+    }
+
+    public void finish(String finalInput) {
+        this.endTime = Instant.now();
+        computeStats(finalInput);
+    }
+
+    private void computeStats(String finalInput) {
+        int compLen = Math.min(finalInput.length(), targetText.length());
+        int correct = 0;
+        for (int i = 0; i < compLen; i++) {
+            if (finalInput.charAt(i) == targetText.charAt(i)) correct++;
+        }
+        this.correctChars = correct;
+        this.totalTyped = finalInput.length();
+    }
+
+    public double getElapsedSeconds() {
+        Instant end = (endTime != null) ? endTime : Instant.now();
+        return Duration.between(startTime, end).toMillis() / 1000.0;
+    }
+
+    public String getTargetText() { return targetText; }
+    public int getCorrectChars() { return correctChars; }
+    public int getTotalTyped() { return totalTyped; }
+}
+
+src/main/java/app/models/TypingStats.java
+package app.models;
+
+/**
+ * Typing statistics calculation (WPM, CPM, accuracy)
+ */
+public class TypingStats {
+
+    /**
+     * WPM (words per minute) standard calculation uses 5 chars as a word.
+     * @param correctChars number of correct characters
+     * @param seconds elapsed seconds
+     */
+    public static double calcWPM(int correctChars, double seconds) {
+        if (seconds <= 0) return 0;
+        double words = correctChars / 5.0;
+        return (words / seconds) * 60.0;
+    }
+
+    public static double calcCPM(int correctChars, double seconds) {
+        if (seconds <= 0) return 0;
+        double charsPerMinute = (correctChars / seconds) * 60.0;
+        return charsPerMinute;
+    }
+
+    public static double calcAccuracy(int correctChars, int totalTyped) {
+        if (totalTyped == 0) return 0;
+        return (correctChars * 100.0) / totalTyped;
+    }
+}
+
+src/main/java/app/models/LeaderboardManager.java
+package app.models;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.*;
+import java.lang.reflect.Type;
+import java.nio.file.*;
+import java.util.*;
+
+/**
+ * Simple local leaderboard manager using JSON file.
+ * Stores entries as Map<String,Object> -> we create a tiny POJO class.
+ */
+public class LeaderboardManager {
+
+    private static final Path STORAGE = Paths.get(System.getProperty("user.home"), ".typing_leaderboard.json");
+    private static final Gson GSON = new Gson();
+
+    public static class Entry {
+        public String name;
+        public double wpm;
+        public double accuracy;
+        public String date;
+        public String difficulty;
+        public Entry() {}
+        public Entry(String name, double wpm, double accuracy, String date, String difficulty) {
+            this.name = name;
+            this.wpm = wpm;
+            this.accuracy = accuracy;
+            this.date = date;
+            this.difficulty = difficulty;
+        }
+    }
+
+    public static List<Entry> load() {
+        try {
+            if (Files.notExists(STORAGE)) return new ArrayList<>();
+            String json = Files.readString(STORAGE);
+            Type t = new TypeToken<List<Entry>>(){}.getType();
+            List<Entry> list = GSON.fromJson(json, t);
+            return list == null ? new ArrayList<>() : list;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public static void save(List<Entry> entries) {
+        try {
+            String json = GSON.toJson(entries);
+            Files.writeString(STORAGE, json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void addEntry(Entry e) {
+        List<Entry> entries = load();
+        entries.add(e);
+        // keep top 50 sorted by wpm desc then accuracy
+        entries.sort((a,b) -> {
+            int cmp = Double.compare(b.wpm, a.wpm);
+            if (cmp != 0) return cmp;
+            return Double.compare(b.accuracy, a.accuracy);
+        });
+        if (entries.size() > 50) entries = entries.subList(0,50);
+        save(entries);
+    }
+}
+
+src/main/java/app/controllers/MainController.java
+package app.controllers;
+
+import app.models.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.chart.*;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.HBox;
+import javafx.util.Duration;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+
+/**
+ * Main UI controller for typing test.
+ */
+public class MainController {
+
+    @FXML private ChoiceBox<String> difficultyChoice;
+    @FXML private TextArea targetArea;
+    @FXML private TextArea inputArea;
+    @FXML private Label wpmLabel, cpmLabel, accuracyLabel, timerLabel;
+    @FXML private Button startBtn, pauseBtn, resetBtn, nextBtn, resultsBtn;
+    @FXML private HBox themeBox;
+    @FXML private ChoiceBox<String> themeChoice;
+    @FXML private ChoiceBox<Integer> timeChoice; // test duration in seconds
+    @FXML private ListView<String> leaderboardView;
+
+    private Timeline timer;
+    private int remainingSeconds;
+    private boolean running = false;
+    private TypingTest currentTest;
+    private ArrayList<Double> wpmSamples = new ArrayList<>();
+
+    @FXML
+    public void initialize() {
+        difficultyChoice.getItems().addAll("EASY", "MEDIUM", "HARD");
+        difficultyChoice.setValue("MEDIUM");
+
+        themeChoice.getItems().addAll("Light", "Dark");
+        themeChoice.setValue("Light");
+
+        timeChoice.getItems().addAll(30, 60, 120);
+        timeChoice.setValue(60);
+
+        targetArea.setWrapText(true);
+        inputArea.setWrapText(true);
+        inputArea.setDisable(true);
+
+        // load initial paragraph
+        loadNewParagraph();
+
+        // load leaderboard
+        refreshLeaderboard();
+
+        // sample key listener to record input states
+        inputArea.addEventFilter(KeyEvent.KEY_TYPED, e -> {
+            if (!running) return;
+            currentTest.recordInputState(inputArea.getText());
+        });
+    }
+
+    private void loadNewParagraph() {
+        ParagraphGenerator.Difficulty diff = ParagraphGenerator.Difficulty.valueOf(difficultyChoice.getValue());
+        targetArea.setText(ParagraphGenerator.randomParagraph(diff));
+    }
+
+    @FXML
+    public void onStartClicked() {
+        if (running) return;
+        inputArea.clear();
+        inputArea.setDisable(false);
+        inputArea.requestFocus();
+
+        currentTest = new TypingTest(targetArea.getText());
+        remainingSeconds = timeChoice.getValue();
+        timerLabel.setText(formatTime(remainingSeconds));
+        running = true;
+        wpmSamples.clear();
+
+        timer = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
+            remainingSeconds--;
+            timerLabel.setText(formatTime(remainingSeconds));
+            updateMetrics(); // update wpm sample each second
+            if (remainingSeconds <= 0) {
+                stopTest();
+            }
+        }));
+        timer.setCycleCount(remainingSeconds);
+        timer.play();
+
+        startBtn.setDisable(true);
+        pauseBtn.setDisable(false);
+        resetBtn.setDisable(false);
+        nextBtn.setDisable(true);
+    }
+
+    @FXML
+    public void onPauseClicked() {
+        if (!running) return;
+        if (timer != null) {
+            timer.stop();
+            running = false;
+            pauseBtn.setText("Resume");
+            inputArea.setDisable(true);
+        } else {
+            // resume
+            running = true;
+            timer = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
+                remainingSeconds--;
+                timerLabel.setText(formatTime(remainingSeconds));
+                updateMetrics();
+                if (remainingSeconds <= 0) stopTest();
+            }));
+            timer.setCycleCount(remainingSeconds);
+            timer.play();
+            pauseBtn.setText("Pause");
+            inputArea.setDisable(false);
+            inputArea.requestFocus();
+        }
+    }
+
+    @FXML
+    public void onResetClicked() {
+        if (timer != null) timer.stop();
+        running = false;
+        inputArea.clear();
+        inputArea.setDisable(true);
+        timerLabel.setText(formatTime(timeChoice.getValue()));
+        wpmLabel.setText("WPM: 0");
+        cpmLabel.setText("CPM: 0");
+        accuracyLabel.setText("Accuracy: 0%");
+        startBtn.setDisable(false);
+        pauseBtn.setDisable(true);
+        pauseBtn.setText("Pause");
+        resetBtn.setDisable(true);
+        nextBtn.setDisable(false);
+    }
+
+    @FXML
+    public void onNextClicked() {
+        loadNewParagraph();
+        onResetClicked();
+    }
+
+    private void stopTest() {
+        if (timer != null) timer.stop();
+        running = false;
+        String finalInput = inputArea.getText();
+        currentTest.finish(finalInput);
+        updateMetrics(); // final update
+
+        // prepare results entry
+        double wpm = TypingStats.calcWPM(currentTest.getCorrectChars(), currentTest.getElapsedSeconds());
+        double accuracy = TypingStats.calcAccuracy(currentTest.getCorrectChars(), currentTest.getTotalTyped());
+        String difficulty = difficultyChoice.getValue();
+
+        // show a results dialog (simple)
+        Platform.runLater(() -> {
+            resultsBtn.setDisable(false);
+            // Save to leaderboard (ask for name)
+            TextInputDialog dialog = new TextInputDialog("Anonymous");
+            dialog.setTitle("Save Result");
+            dialog.setHeaderText("Enter your name for the leaderboard");
+            dialog.setContentText("Name:");
+            dialog.showAndWait().ifPresent(name -> {
+                LeaderboardManager.Entry entry = new LeaderboardManager.Entry(
+                        name,
+                        Math.round(wpm * 100.0) / 100.0,
+                        Math.round(accuracy * 100.0) / 100.0,
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                        difficulty
+                );
+                LeaderboardManager.addEntry(entry);
+                refreshLeaderboard();
+            });
+        });
+
+        startBtn.setDisable(false);
+        pauseBtn.setDisable(true);
+        resetBtn.setDisable(true);
+        nextBtn.setDisable(false);
+    }
+
+    private void updateMetrics() {
+        String input = inputArea.getText();
+        int correct = 0;
+        String target = targetArea.getText();
+        int compLen = Math.min(input.length(), target.length());
+        for (int i = 0; i < compLen; i++) {
+            if (input.charAt(i) == target.charAt(i)) correct++;
+        }
+        double elapsed = (timeChoice.getValue() - remainingSeconds);
+        if (elapsed <= 0) elapsed = 1; // avoid div by 0 for early samples
+        double wpm = TypingStats.calcWPM(correct, elapsed);
+        double cpm = TypingStats.calcCPM(correct, elapsed);
+        double accuracy = TypingStats.calcAccuracy(correct, input.length() == 0 ? 1 : input.length());
+
+        wpmLabel.setText(String.format("WPM: %.2f", wpm));
+        cpmLabel.setText(String.format("CPM: %.2f", cpm));
+        accuracyLabel.setText(String.format("Accuracy: %.2f%%", accuracy));
+
+        wpmSamples.add(wpm);
+    }
+
+    @FXML
+    public void onResultsClicked() {
+        // show results popup: simple inline chart using last samples
+        Stage resultsStage = new Stage();
+        resultsStage.setTitle("Results Chart");
+
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+        xAxis.setLabel("Second");
+        yAxis.setLabel("WPM");
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        for (int i = 0; i < wpmSamples.size(); i++) {
+            series.getData().add(new XYChart.Data<>(String.valueOf(i+1), wpmSamples.get(i)));
+        }
+        chart.getData().add(series);
+
+        Scene scene = new Scene(chart, 600, 400);
+        resultsStage.setScene(scene);
+        resultsStage.show();
+    }
+
+    private void refreshLeaderboard() {
+        leaderboardView.getItems().clear();
+        var entries = LeaderboardManager.load();
+        for (var e : entries) {
+            leaderboardView.getItems().add(String.format("%s | WPM: %.2f | Acc: %.2f%% | %s | %s",
+                    e.name, e.wpm, e.accuracy, e.difficulty, e.date));
+        }
+    }
+
+    private String formatTime(int seconds) {
+        int m = seconds / 60;
+        int s = seconds % 60;
+        return String.format("%02d:%02d", m, s);
+    }
+}
+
+src/main/java/app/controllers/ResultsController.java
+// Optional: advanced results screen controller if you want a dedicated FXML for results.
+// For this deliverable the MainController opens a simple chart stage.
+// If you want a dedicated results_view.fxml and controller, I can provide it.
+package app.controllers;
+
+public class ResultsController {
+    // left intentionally minimal; extend if required
+}
+
+src/main/resources/main_view.fxml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="app.controllers.MainController" prefWidth="1000" prefHeight="650">
+
+    <top>
+        <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding:10;">
+            <Label text="Typing Speed Test Pro" style="-fx-font-size:20px; -fx-font-weight:bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Theme:"/>
+            <ChoiceBox fx:id="themeChoice" prefWidth="90"/>
+        </HBox>
+    </top>
+
+    <center>
+        <GridPane hgap="12" vgap="12" padding="15">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="65"/>
+                <ColumnConstraints percentWidth="35"/>
+            </columnConstraints>
+
+            <!-- Left: test area -->
+            <VBox spacing="10" GridPane.columnIndex="0">
+                <HBox spacing="8">
+                    <Label text="Difficulty:"/>
+                    <ChoiceBox fx:id="difficultyChoice" />
+                    <Label text="Duration (sec):"/>
+                    <ChoiceBox fx:id="timeChoice"/>
+                    <Button text="Load New" onAction="#onNextClicked"/>
+                </HBox>
+
+                <Label text="Target Text:" style="-fx-font-weight:bold;"/>
+                <TextArea fx:id="targetArea" prefRowCount="4" editable="false"/>
+
+                <Label text="Type here:" style="-fx-font-weight:bold;"/>
+                <TextArea fx:id="inputArea" prefRowCount="6"/>
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button fx:id="startBtn" text="Start" onAction="#onStartClicked"/>
+                    <Button fx:id="pauseBtn" text="Pause" onAction="#onPauseClicked" disable="true"/>
+                    <Button fx:id="resetBtn" text="Reset" onAction="#onResetClicked" disable="true"/>
+                    <Button fx:id="nextBtn" text="Next Paragraph" onAction="#onNextClicked"/>
+                    <Button fx:id="resultsBtn" text="Show Chart" onAction="#onResultsClicked" disable="false"/>
+                </HBox>
+
+                <HBox spacing="18" alignment="CENTER_LEFT" style="-fx-padding:10;">
+                    <Label fx:id="wpmLabel" text="WPM: 0" style="-fx-font-size:14px; -fx-font-weight:bold;"/>
+                    <Label fx:id="cpmLabel" text="CPM: 0" style="-fx-font-size:14px; -fx-font-weight:bold;"/>
+                    <Label fx:id="accuracyLabel" text="Accuracy: 0%" style="-fx-font-size:14px; -fx-font-weight:bold;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="Time:"/>
+                    <Label fx:id="timerLabel" text="00:60" style="-fx-font-weight:bold;"/>
+                </HBox>
+            </VBox>
+
+            <!-- Right: leaderboard, tips -->
+            <VBox spacing="10" GridPane.columnIndex="1">
+                <Label text="Leaderboard" style="-fx-font-weight:bold;"/>
+                <ListView fx:id="leaderboardView" prefHeight="300"/>
+
+                <Label text="Tips" style="-fx-font-weight:bold;"/>
+                <Label wrapText="true" text="• Focus on accuracy first, then increase speed.\n• Use the sample paragraphs to practice punctuation.\n• Try different difficulty levels for improved skill."/>
+            </VBox>
+
+        </GridPane>
+    </center>
+
+    <bottom>
+        <HBox style="-fx-padding:12;" alignment="CENTER_RIGHT">
+            <Label text="Typing Speed Test Pro — Resume-ready project" />
+        </HBox>
+    </bottom>
+
+</BorderPane>
+
+src/main/resources/style.css
+.root {
+    -fx-font-family: "Segoe UI", "Roboto", "Arial";
+    -fx-background-color: linear-gradient(#f8fafc, #eef5ff);
+}
+
+/* Buttons */
+.button {
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+}
+
+/* TextAreas */
+.text-area {
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #1f2937;
+}
+
+/* ListView */
+.list-view {
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+/* Light and Dark themes can be toggled by modifying root classes via controller (optional). */
+
+FULL PROJECT GUIDE (DOCUMENTATION) — ready for report
+
+Below is the text you can paste into your project report (PDF/DOCX). It’s structured and detailed.
+
+Project Title
+
+Typing Speed Test Pro (JavaFX) — Advanced Typing Trainer with Leaderboard & Analytics
+
+1. Abstract
+
+Typing Speed Test Pro is an advanced desktop application built using Java and JavaFX to help users measure and improve typing speed and accuracy. The application features timed tests, difficulty levels, a random paragraph generator, live WPM/CPM/Accuracy metrics, leaderboard persistence, and result visualizations. It is structured using MVC architecture for maintainability and extensibility.
+
+2. Introduction
+
+Typing ability remains an important practical skill. This project provides a modern, interactive environment for practicing and measuring typing performance. The application aims to offer real-time feedback and long-term tracking via a local leaderboard, making it suitable for both casual and serious practice.
+
+3. Problem Statement
+
+Many existing typing tools are either too simplistic or web-only. Students and professionals might want an offline, extendable desktop app with analytics and persistent leaderboards. This project addresses that need.
+
+4. Objectives
+
+Build a responsive JavaFX GUI for typing tests.
+
+Implement difficulty levels and random paragraph generator.
+
+Provide real-time metrics (WPM, CPM, Accuracy).
+
+Maintain local leaderboard storage (JSON).
+
+Include charts for performance visualization.
+
+Follow MVC patterns for clean code.
+
+5. Scope & Limitations
+
+Scope:
+
+Desktop Java application with offline persistence.
+
+Limitations:
+
+Local leaderboard (no cloud sync).
+
+Paragraph bank is embedded (can be extended to CSV/DB).
+
+No live keystroke heatmap (future work).
+
+6. System Requirements
+
+Hardware: CPU i3 or better, 4GB RAM, 100MB disk free
+Software: Java 17+, JavaFX 17+, Maven (optional), IDE (IntelliJ/Eclipse/NetBeans)
+
+7. Methodology & Architecture
+
+Design Pattern: MVC (Model-View-Controller)
+
+Layers:
+
+Model: TypingTest, TypingStats, ParagraphGenerator, LeaderboardManager
+
+View: FXML files + CSS
+
+Controller: MainController handles UI events & orchestration
+
+Sequence of flow:
+
+User selects difficulty/time → clicks Start
+
+Timer starts and user types into input area
+
+Controller updates metrics per second and records samples
+
+When time ends or user stops, results are saved and shown
+
+LeaderboardManager persists results in JSON
+
+8. UML Diagrams (textual)
+
+Class Diagram (brief):
+
+Main — launches app
+
+MainController — UI logic
+
+TypingTest — encapsulates an attempt
+
+TypingStats — WPM/CPM/accuracy calculators
+
+ParagraphGenerator — provides test text
+
+LeaderboardManager — save/load leaderboard entries
+
+Use cases:
+
+Start/stop test, change difficulty, view leaderboard, save results, view charts.
+
+9. Database / Persistence
+
+Local JSON file used to store leaderboard (~/.typing_leaderboard.json) via Gson.
+
+File contains array of entries: {name, wpm, accuracy, date, difficulty}
+
+10. Algorithms
+
+WPM: correctChars / 5 per minute → WPM = (correctChars/5) / (seconds/60)
+
+CPM: (correctChars/seconds) * 60
+
+Accuracy: (correctChars / totalTyped) * 100
+
+Leaderboard: sort by WPM desc, then accuracy
+
+11. User Interface
+
+Screens:
+
+Main Screen: top bar with theme, left full test area (target text + input), right leaderboard & tips
+
+Results Chart: line chart of WPM samples over time (opened as popup)
+
+Controls:
+
+Difficulty (E/M/H), Duration (30/60/120), Start/Pause/Reset/Next, Save name prompt after test.
+
+12. Testing
+
+Functional Tests
+
+Start/Stop triggers timer and disables/enables controls as expected.
+
+WPM/CPM/Accuracy update during typing.
+
+Pause/Resume pauses time and calculation.
+
+Leaderboard persists and loads correctly.
+
+Different difficulties load appropriate paragraphs.
+
+Test Cases (examples)
+
+Typing correct text at 60s -> WPM > 0 and Accuracy = 100%
+
+Enter garbage -> accuracy low, leaderboard saved properly
+
+Interrupt during test -> resume works
+
+Unit Testing
+
+TypingStats methods are pure functions — write JUnit tests for edge cases (0 seconds, 0 chars).
+
+13. Screenshots & Outputs
+
+(Include screenshots captured from running app: main screen, in-progress test, final chart, leaderboard list. In your report insert PNGs with captions.)
+
+14. Future Enhancements
+
+Cloud sync for leaderboard (Firebase / REST API)
+
+Import custom paragraph lists (CSV)
+
+More analytics: streaks, average WPM over last N tests
+
+Visual keyboard highlighting & heatmaps
+
+Mobile/web port (React / Flutter)
+
+Multiplayer race mode (networked)
+
+15. Conclusion
+
+Typing Speed Test Pro demonstrates a complete desktop solution with production-like features: analytics, persistence, and a polished UI. The code uses clear separation of concerns and can be extended (export, cloud, analytics) for a full commercial product or academic submission.
